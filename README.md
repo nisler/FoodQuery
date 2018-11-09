@@ -31,17 +31,17 @@ https://www.eclipse.org/oxygen/
 
 ### clone from GitHub
 
-Students may clone this repository and do the following from a local terminal window to get files in correct place for Eclipse JavaFX project.
+Students may clone this repository and do the following from a local terminal window to get files in correct place for Eclipse JavaFX project.  Note: execute commands on the left and not the comments as shown on the right.
 
 ```
-cd ~/cs400-workspace/p5
-git clone https://github.com/cs400-deppeler/FoodQuery (Links to an external site.)Links to an external site.
-mv FoodQuery/.git .
-mv FoodQuery/.gitignore .
-mv FoodQuery/* .
-rmdir FoodQuery
+cd ~/cs400-workspace/p5                                  # cd to your local project directory
+git clone https://github.com/cs400-deppeler/FoodQuery    # git clone to get files from this site
+mv FoodQuery/.git .                                      # move .git file into current directory
+mv FoodQuery/.gitignore .                                # moves .gitignore file into current directory
+mv FoodQuery/* .                                         # moves all source and data files into current directory
+rmdir FoodQuery                                          # remove the FoodQuery sub-directory
 ```
 
-### Or, download from the course assignment page
+### Or, download files as in previous assignments from the assignment page
 
 https://pages.cs.wisc.edu/~deppeler/cs400/assignments/p5/files/
