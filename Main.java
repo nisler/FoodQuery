@@ -18,6 +18,10 @@ import javafx.scene.text.Text;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
+/**
+* Entry point of the FoodQuery Program
+* Houses GUI code for now.
+*/
 public class Main extends Application {
 
 	public static void main(String[] args) {
