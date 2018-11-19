@@ -1,14 +1,17 @@
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-/**
+/**TODO
  * This class represents the backend for managing all 
  * the operations associated with FoodItems
  * 
@@ -32,12 +35,12 @@ public class FoodData implements FoodDataADT<FoodItem> {
     }
     
     
-    /*
-     * (non-Javadoc)
-     * @see skeleton.FoodDataADT#loadFoodItems(java.lang.String)
+    /**
+     * TODO
      */
     @Override
     public void loadFoodItems(String filePath) {
+        // TODO : Complete loading nutrients when BPTree is implemented, add more exception handling
     	Stream<String> lines = null;
     	try {
 			lines = Files.lines(Paths.get(filePath));
@@ -58,25 +61,21 @@ public class FoodData implements FoodDataADT<FoodItem> {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-    	
-        // TODO : Complete loading nutrients when BPTree is implemented
     }
 
-    /*
-     * (non-Javadoc)
-     * @see skeleton.FoodDataADT#filterByName(java.lang.String)
+    /**
+     * TODO
      */
     @Override
     public List<FoodItem> filterByName(String substring) {
-    	List<FoodItem> filtered = foodItemList.stream()
+    	List<FoodItem> filteredFoodItemList = foodItemList.stream()
     			.filter(item -> item.getName().toLowerCase().contains(substring.toLowerCase()))
     			.collect(Collectors.toList());
-    	return filtered;
+    	return filteredFoodItemList;
     }
 
-    /*
-     * (non-Javadoc)
-     * @see skeleton.FoodDataADT#filterByNutrients(java.util.List)
+    /**
+     * TODO
      */
     @Override
     public List<FoodItem> filterByNutrients(List<String> rules) {
@@ -84,18 +83,16 @@ public class FoodData implements FoodDataADT<FoodItem> {
         return null;
     }
 
-    /*
-     * (non-Javadoc)
-     * @see skeleton.FoodDataADT#addFoodItem(skeleton.FoodItem)
+    /**
+     * TODO
      */
     @Override
     public void addFoodItem(FoodItem foodItem) {
     	foodItemList.add(foodItem);
     }
 
-    /*
-     * (non-Javadoc)
-     * @see skeleton.FoodDataADT#getAllFoodItems()
+    /**
+     * TODO
      */
     @Override
     public List<FoodItem> getAllFoodItems() {
@@ -103,10 +100,34 @@ public class FoodData implements FoodDataADT<FoodItem> {
     }
 
 
+    /**
+     * TODO
+     */
 	@Override
 	public void saveFoodItems(String filename) {
-		// TODO Auto-generated method stub
+		// TODO add nutrients and more exception handling
+		List<FoodItem> sortedFoodItemList = foodItemList.stream()
+				.sorted((item1, item2) -> item1.getName().compareToIgnoreCase(item2.getName()))
+				.collect(Collectors.toList());
 		
+		try (PrintWriter printwriter = new PrintWriter(Files.newBufferedWriter(Paths.get("./" + filename)))) {
+			sortedFoodItemList.forEach(item -> {
+				StringBuilder itemString = new StringBuilder();
+				itemString.append(item.getID() + ",");
+				itemString.append(item.getName() + ",");
+				
+				Set<String> nutrientSet = item.getNutrients().keySet();
+				for (String nutrient : nutrientSet) {
+					itemString.append(nutrient + ",");
+					itemString.append(item.getNutrientValue(nutrient) + ",");
+				}
+				
+				printwriter.println(itemString.toString());
+			});
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 
 }

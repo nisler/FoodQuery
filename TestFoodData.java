@@ -80,5 +80,30 @@ public class TestFoodData {
 			fail("Unexpectedly caught: " + e);
 		}
 	}
+	
+	@Test
+	public void test07SaveFoodItemsAscendingOrder() {
+		try {
+			foodData.loadFoodItems("foodItems.csv");
+			foodData.saveFoodItems("output.csv");
+			List<FoodItem> items = foodData.filterByName("180Energy_X33CarbsLemonLimeCitrusBlast");
+			assertEquals("180Energy_X33CarbsLemonLimeCitrusBlast", items.get(0).getName());
+		} catch (Exception e) {
+			fail("Unexpectedly caught: " + e);
+		}
+	}
+	
+	@Test
+	public void test08SaveFoodItems() {
+		try {
+			foodData.loadFoodItems("foodItems.csv");
+			foodData.saveFoodItems("output.csv");
+			foodData.loadFoodItems("output.csv");
+			List<FoodItem> items = foodData.filterByName("180Energy_X33CarbsLemonLimeCitrusBlast");
+			assertEquals("180Energy_X33CarbsLemonLimeCitrusBlast", items.get(0).getName());
+		} catch (Exception e) {
+			fail("Unexpectedly caught: " + e);
+		}
+	}
 
 }
