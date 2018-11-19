@@ -1,5 +1,12 @@
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * This class represents the backend for managing all 
@@ -20,7 +27,8 @@ public class FoodData implements FoodDataADT<FoodItem> {
      * Public constructor
      */
     public FoodData() {
-        // TODO : Complete
+    	foodItemList = new ArrayList<>();
+    	indexes = new HashMap<>();
     }
     
     
@@ -30,7 +38,28 @@ public class FoodData implements FoodDataADT<FoodItem> {
      */
     @Override
     public void loadFoodItems(String filePath) {
-        // TODO : Complete
+    	Stream<String> lines = null;
+    	try {
+			lines = Files.lines(Paths.get(filePath));
+			lines
+			.map(line -> {
+				List<String> tokens = Arrays.asList(line.split(","));
+				FoodItem foodItem = null;
+				if (tokens.size() > 0) {
+					foodItem = new FoodItem(tokens.get(0), tokens.get(1));	
+				}
+				return foodItem;
+			})
+			.forEach(item -> {
+				if (item != null) {
+					addFoodItem(item);
+				}
+			});
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+    	
+        // TODO : Complete loading nutrients when BPTree is implemented
     }
 
     /*
@@ -39,8 +68,10 @@ public class FoodData implements FoodDataADT<FoodItem> {
      */
     @Override
     public List<FoodItem> filterByName(String substring) {
-        // TODO : Complete
-        return null;
+    	List<FoodItem> filtered = foodItemList.stream()
+    			.filter(item -> item.getName().toLowerCase().contains(substring.toLowerCase()))
+    			.collect(Collectors.toList());
+    	return filtered;
     }
 
     /*
@@ -59,7 +90,7 @@ public class FoodData implements FoodDataADT<FoodItem> {
      */
     @Override
     public void addFoodItem(FoodItem foodItem) {
-        // TODO : Complete
+    	foodItemList.add(foodItem);
     }
 
     /*
@@ -68,8 +99,14 @@ public class FoodData implements FoodDataADT<FoodItem> {
      */
     @Override
     public List<FoodItem> getAllFoodItems() {
-        // TODO : Complete
-        return null;
+        return foodItemList;
     }
+
+
+	@Override
+	public void saveFoodItems(String filename) {
+		// TODO Auto-generated method stub
+		
+	}
 
 }
