@@ -138,7 +138,7 @@ public class FoodData implements FoodDataADT<FoodItem> {
 				.sorted((item1, item2) -> item1.getName().compareToIgnoreCase(item2.getName()))
 				.collect(Collectors.toList());
 		
-		try (PrintWriter printwriter = new PrintWriter(Files.newBufferedWriter(Paths.get("./" + filename)))) {
+		try (PrintWriter printwriter = new PrintWriter(Files.newBufferedWriter(Paths.get(filename)))) {
 			sortedFoodItemList.forEach(item -> {
 				StringBuilder itemString = new StringBuilder();
 				itemString.append(item.getID() + ",");
