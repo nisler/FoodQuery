@@ -62,8 +62,10 @@ public class BPTree<K extends Comparable<K>, V> implements BPTreeADT<K, V> {
     @Override
     public void insert(K key, V value) {
     	
+    	//handle case where root is a leaf node (root is only node) separately
     	if (root instanceof BPTree.LeafNode) {
     		root.insert(key, value);
+    		
             //case where we overflow into the root and need to set a new one
             if (root.isOverflow()) {
     			Node sibling = root.split();
@@ -74,6 +76,8 @@ public class BPTree<K extends Comparable<K>, V> implements BPTreeADT<K, V> {
     			root = newParent;
             }
     	}
+    	
+    	//otherwise use recursion to insert into root as internal node
     	else {
             root = ((InternalNode) root).recursiveInsert(null,root,key,value);
     	}
@@ -158,6 +162,16 @@ public class BPTree<K extends Comparable<K>, V> implements BPTreeADT<K, V> {
          * @param value
          */
         abstract void insert(K key, V value);
+        
+        /**
+         * Recursive helper for insert
+         * @param prev previous (parent) node in the tree
+         * @param root root if the current subtree
+         * @param key the key that is being inserted into the tree
+         * @param value the value associated with that key
+         * @return returns the new root of this subtree
+         */
+        abstract Node recursiveInsert(InternalNode prev, Node root, K key, V value);
 
         /**
          * Gets the first leaf key of the tree
@@ -186,8 +200,6 @@ public class BPTree<K extends Comparable<K>, V> implements BPTreeADT<K, V> {
          * @return boolean
          */
         abstract boolean isOverflow();
-        
-        abstract Node recursiveInsert(Node prev, Node root, K key, V value);
         
         /**
          * Prints out the list of keys in this node.
@@ -231,6 +243,11 @@ public class BPTree<K extends Comparable<K>, V> implements BPTreeADT<K, V> {
         	return recursiveGetFirstLeafKey(this);
         }
         
+        /**
+         * Recursive helper for getFirstLeafKey
+         * @param n current node being examined (root of current subtree)
+         * @return the first leaf key in this subtree
+         */
         K recursiveGetFirstLeafKey(Node n) {
         	
         	if (n == null) return null;
@@ -245,8 +262,10 @@ public class BPTree<K extends Comparable<K>, V> implements BPTreeADT<K, V> {
         }
         
         /**
-         * (non-Javadoc)
-         * @see BPTree.Node#isOverflow()
+         * Returns true if node is overfull
+         * If internal - true if # children > branching factor
+         * if leaf - true if # children >= branching factor
+         * @return boolean
          */
         boolean isOverflow() {
             if (children.size() > branchingFactor) return true;
@@ -255,34 +274,50 @@ public class BPTree<K extends Comparable<K>, V> implements BPTreeADT<K, V> {
         }
         
         /**
+         * Not currently using
          * (non-Javadoc)
          * @see BPTree.Node#insert(java.lang.Comparable, java.lang.Object)
          */
         void insert(K key, V value) {
-            this = recursiveInsert(null, this, key, value);
+            return;
         }
         
+        /**
+         * Recursive helper for inserting into this subtree where current is the root
+         * Finds the appropriate leaf node in this subtree, inserts into it,
+         * and then rebalances the tree to maintain B tree properties
+         * @param prev - the parent of the current node (previous node that was examined)
+         * @param current - the root of the current subtree
+         * @param key - the key being inserted
+         * @param value - the value associated with the key
+         */
         Node recursiveInsert(InternalNode prev, Node current, K key, V value) {
+        	//if the current node is null, don't do anything
         	if (current == null) return null;
         	
+        	//if the current node is a leaf, we should insert into it
         	if (current instanceof BPTree.LeafNode) {
         		current.insert(key, value);
+        		
+        		//if there is now overflow, rebalance at this node
         		if (current.isOverflow()) {
         			((LeafNode) current).rebalance(prev);
         		}
         	}
         	
+        	//otherwise this node is internal and we need to find the appropriate leaf
         	else {
         		
         		//edge case 1: key is < everything in this node
+        		//so insert into the subtree with this node's first child as root
         		if (key.compareTo(current.keys.get(0)) < 0) {
 
             		Node firstChild = ((InternalNode) current).children.get(0);
-        			
         			recursiveInsert((InternalNode) current, firstChild,key,value);
         		}
         		
         		//edge case 2: key is > everything in this node
+        		//so insert into the subtree with this node's last child as root
         		else if (key.compareTo(current.keys.get(current.keys.size() - 1)) > 0) {
         			
         			Node lastChild = ((InternalNode) current).children.get(((InternalNode) current).children.size() - 1);
@@ -293,34 +328,67 @@ public class BPTree<K extends Comparable<K>, V> implements BPTreeADT<K, V> {
         		//otherwise loop through all keys and find where the one we're trying to insert fits
         		else {
         			for (int i = 0; i < current.keys.size()-1; i++) {
+        				//check if this key is between the current key and its neighbor
         				if ((key.compareTo(current.keys.get(i)) > 0) && (key.compareTo(current.keys.get(i+1)) < 0)) {
+        					//if yes, insert into the child between these two keys
         					recursiveInsert((InternalNode) current,((InternalNode) current).children.get(i+1),key,value);
         					break;
         				}
         			}
         		}
         		
-        		//now for this combined case, check for overflow
+        		//check for overflow in this internal node
         		if (current.isOverflow()) {
+        			//if we have a previous node (ie, this node is not the root of the whole BPTree)
+        			//then rebalance by promoting into that
         			if (prev != null) {
-        				System.out.println(prev);
-        				System.out.println(current);
         				((InternalNode) current).rebalance(prev);
         			}
+        			
+        			//otherwise if there is no previous node (we're acting on the root of the whole BPTree)
+        			//generate a new node, promote a key into it, and make it the new root
         			else {
         				Node sibling = current.split();
         				InternalNode newParent = new InternalNode();
+        				//add pointers to children
         				newParent.children.add(sibling);
         				newParent.children.add(current);
+        				//remove and promote middle element
+        				//based on split, this will be the first element in the current node
         				newParent.keys.add(current.keys.remove(0));
+        				//now make the new node the new root
         				current = newParent;
         			}
         		}
         	}
         	
+        	//return whatever the current node is
         	return current;
         }
         
+        /**
+         * rebalance the BST tree where the current node (this)
+         * is the root
+         * @param prev - the parent of the current node (the previously visited node)
+         */
+        void rebalance(InternalNode prev) {
+        	//split and get new sibling
+        	InternalNode sibling = (InternalNode) split();
+        	
+        	//remove pointer to this (current) node from previous
+        	prev.children.remove(this);
+        	
+        	//merge new parent with previous (to promote up key)
+        	prev.promote(sibling,this,this.keys.remove(0));
+        }
+        
+        /**
+         * Promotes the given key and children nodes
+         * into the node that we're currently looking at
+         * @param child1 - smaller (based on sizes of keys) child to add pointers to
+         * @param child2 - larger child to add pointers to
+         * @param key - key to be promoted up
+         */
         void promote(Node child1, Node child2, K key) {
         	//case 1: key is less than everything in current key list
         	if (key.compareTo(keys.get(0)) < 0) {
@@ -338,9 +406,10 @@ public class BPTree<K extends Comparable<K>, V> implements BPTreeADT<K, V> {
         		return;
         	}
         	
-        	//case 3: somewhere in middle
-        	
+        	//case 3: somewhere in middle, so search through all keys and find where this fits
         	for (int i = 0; i < keys.size(); i++) {
+        		//if this key is between element i and element i+1, put it between them
+        		//and add its associated node children in between as well
         		if ((key.compareTo(keys.get(i)) > 0) && (key.compareTo(keys.get(i+1)) <= 0)) {
         			keys.add(i+1,key);
         			children.add(i+1,child2);
@@ -349,23 +418,13 @@ public class BPTree<K extends Comparable<K>, V> implements BPTreeADT<K, V> {
         	}
         }
         
-        void rebalance(InternalNode prev) {
-        	//split and get new sibling
-        	InternalNode sibling = (InternalNode) split();
-        	
-        	//remove pointer to this (current) node from previous
-        	prev.children.remove(this);
-        	//merge new parent with previous (to promote up key)
-        	prev.promote(sibling,this,this.keys.remove(0));
-        }
-        
         /**
-         * (non-Javadoc)
-         * @see BPTree.Node#split()
+         * Creates a new sibling node holding the smaller half of the keys
+         * from the current node
+         * The current node retains all keys from the middle onward
+         * @return new sibling node
          */
         Node split() {
-            //create two new internal nodes, each getting half of keys and children
-        	//and then create new parent node that will have those new nodes as children
         	
         	InternalNode sibling = new InternalNode();
         	
@@ -407,6 +466,7 @@ public class BPTree<K extends Comparable<K>, V> implements BPTreeADT<K, V> {
     private class LeafNode extends Node {
         
         // List of values
+    	// the value at index i is associated with the key at index i of keys
         List<V> values;
         
         // Reference to the next leaf node
@@ -417,6 +477,7 @@ public class BPTree<K extends Comparable<K>, V> implements BPTreeADT<K, V> {
         
         /**
          * Package constructor
+         * initializes empty list of values, keys
          */
         LeafNode() {
             super();
@@ -425,16 +486,16 @@ public class BPTree<K extends Comparable<K>, V> implements BPTreeADT<K, V> {
         
         
         /**
-         * (non-Javadoc)
-         * @see BPTree.Node#getFirstLeafKey()
+         * returns the first key stored in this leaf
+         * @return key - the first key
          */
         K getFirstLeafKey() {
             return keys.get(0);
         }
         
         /**
-         * (non-Javadoc)
-         * @see BPTree.Node#isOverflow()
+         * Checks whether this leaf has too many children
+         * @return true if this node has >= branchingFactor elements, false otherwise
          */
         boolean isOverflow() {
             if (values.size() >= branchingFactor) return true;
@@ -443,8 +504,11 @@ public class BPTree<K extends Comparable<K>, V> implements BPTreeADT<K, V> {
         }
         
         /**
-         * (non-Javadoc)
-         * @see BPTree.Node#insert(Comparable, Object)
+         * Inserts the key and value into this leaf's key and value lists
+         * While maintaining sorted order
+         * keeps hte key and its associated value at the same index in the list
+         * @param key - key to be inserted
+         * @param value - value associated with the key
          */
         void insert(K key, V value) {
         	//edge case #0 - nothing in list
@@ -468,6 +532,7 @@ public class BPTree<K extends Comparable<K>, V> implements BPTreeADT<K, V> {
         		return;
         	}
         	
+        	//otherwise, need to insert somewhere in the middle
             for (int i = 0; i < keys.size(); i++) {
             	if ((key.compareTo(keys.get(i)) > 0) && (key.compareTo(keys.get(i+1)) <= 0)) {
             		keys.add(i+1,key);
@@ -477,6 +542,11 @@ public class BPTree<K extends Comparable<K>, V> implements BPTreeADT<K, V> {
             }
         }
         
+        /**
+         * Rebalances the tree
+         * Splits current node into two, and promotes up middle key
+         * @param prev - the parent of the current node
+         */
         void rebalance(InternalNode prev) {
         	//split and get new sibling
         	LeafNode sibling = (LeafNode) split();
@@ -485,17 +555,20 @@ public class BPTree<K extends Comparable<K>, V> implements BPTreeADT<K, V> {
         	prev.children.remove(this);
         	
         	//merge new parent with previous (to promote up key)
+        	//NOTE: unlike with internal node, the nmiddle key is not removed
+        	//since all keys must be contained in leaves
         	prev.promote(sibling,this,this.keys.get(0));
         }
         
         /**
-         * (non-Javadoc)
-         * @see BPTree.Node#split()
+         * Splits the current node into two
+         * With the new sibling getting all keys and values smaller than the middle
+         * And the current node keeping everything from the middle on
+         * @return the new sibling node
          */
         Node split() {
-            // split leaf down the middle into two new leaves
-        	//and promote middle element into new internal node with leaves as children
         	
+            // split leaf down the middle into two new leaves
         	LeafNode sibling = new LeafNode();
         	
         	//maintain linked list pointers
