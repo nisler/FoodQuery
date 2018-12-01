@@ -3,7 +3,7 @@
  * Project:    p5 - JavaFX Team Project
  * Course:     CS400
  * Authors:    Benjamin Nisler, Gabriella Cottiero, Olivia Gonzalez, 
- *             Timothy James, TOllan Renner
+ *             Timothy James, Tollan Renner
  * Due Date:   Saturday, December 15, 11:59pm
  *
  * Additional credits:
