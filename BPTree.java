@@ -94,8 +94,18 @@ public class BPTree<K extends Comparable<K>, V> implements BPTreeADT<K, V> {
             !comparator.contentEquals("==") && 
             !comparator.contentEquals("<=") )
             return new ArrayList<V>();
-        // TODO : Complete
-        return null;
+        
+        List<V> list = new ArrayList<V>;
+      //handle case where root is a leaf node (root is only node) separately
+        if (root instanceof BPTree.LeafNode) {
+            root.rangeSearch(key, comparator);
+        }
+        
+        //otherwise use recursion to find the correct leaf to start searching in
+        else {
+            list = ((InternalNode) root).recursiveSearch(null, root, key, comparator, list);
+        }
+        return list;
     }
     
     
@@ -448,9 +458,77 @@ public class BPTree<K extends Comparable<K>, V> implements BPTreeADT<K, V> {
          * @see BPTree.Node#rangeSearch(java.lang.Comparable, java.lang.String)
          */
         List<V> rangeSearch(K key, String comparator) {
-            // TODO : Complete
-            return null;
+            List<V> list = new ArrayList<V>;
+            return recursiveSearch(this.root, this.root, key, comparator, list);
         }
+        
+        List<V> recursiveSearch(InternalNode prev, Node current, K key, String comparator, List<v> list) {
+            //if the current node is null, don't do anything
+            if (current == null) return new List<V>;
+            
+            //if the current node is a leaf, we should search it
+            if (current instanceof BPTree.LeafNode) {
+                return current.rangeSearch(key, comparator);
+            }
+            
+            //otherwise this node is internal and we need to find the appropriate leaf
+            else {
+                
+                //edge case 1: key is < everything in this node
+                //so insert into the subtree with this node's first child as root
+                if (key.compareTo(current.keys.get(0)) < 0) {
+                    return new List<V>;
+                }
+                
+                //edge case 2: key is > everything in this node
+                //so insert into the subtree with this node's last child as root
+                else if (key.compareTo(current.keys.get(current.keys.size() - 1)) > 0) {
+                    return new List<V>;
+                }
+                
+                //otherwise loop through all keys and find where we should start our search
+                else {
+                    if(comparator == "<="){
+                        for (int i = 0; i < current.keys.size()-1; i++) {
+                            //check if this key is less than or equal to current key
+                            if ((key.compareTo(current.keys.get(i)) < 0)) {
+                                //if yes, insert into the child between these two keys
+                                recursiveSearch((InternalNode) current,((InternalNode) current).children.get(i+1),key,comparator, list);
+                                break;
+                            }
+                        }
+                    }
+                    else if(comparator == ">="){
+                        for (int i = 0; i < current.keys.size()-1; i++) {
+                            //check if this key is less than or equal to current key
+                            if ((key.compareTo(current.keys.get(i)) > 0)) {
+                                //if yes, insert into the child between these two keys
+                                recursiveSearch((InternalNode) current,((InternalNode) current).children.get(i+1),key,comparator, list);
+                                break;
+                            }
+                        }
+                    }
+                    else if(comparator == "=="){
+                        for (int i = 0; i < current.keys.size()-1; i++) {
+                            //check if this key is less than or equal to current key
+                            if ((key.compareTo(current.keys.get(i)) == 0)) {
+                                //if yes, insert into the child between these two keys
+                                recursiveSearch((InternalNode) current,((InternalNode) current).children.get(i+1),key,comparator, list);
+                                break;
+                            }
+                        }
+                    }
+                    else{
+                        return new List<v>;
+                    }
+                }
+                
+            }
+            
+            //return whatever the current list is
+            return list;
+        }
+        
     
     } // End of class InternalNode
     
@@ -590,8 +668,37 @@ public class BPTree<K extends Comparable<K>, V> implements BPTreeADT<K, V> {
          * @see BPTree.Node#rangeSearch(Comparable, String)
          */
         List<V> rangeSearch(K key, String comparator) {
-            // TODO : Complete
-            return null;
+            List<V> list = new List<V>();
+            // Case 1:  ">=
+            if(comparator == ">="){
+                for(int i=0; i < keys.size(); i++){
+                    if(key.compareTo(keys.get(i) >= 0)){
+                        list.add(keys.get(i));
+                    }
+                }
+            }
+            //Case 2: "<="
+            else if(comparator == "<="){
+                for(int i=0; i < keys.size(); i++){
+                    if(key.compareTo(keys.get(i) <= 0)){
+                        list.add(keys.get(i));
+                    }
+                }           
+            }
+            //Case 3: "=="
+            else if(comparator == "=="){
+                for(int i=0; i < keys.size(); i++){
+                    if(key.compareTo(keys.get(i) == 0)){
+                        list.add(keys.get(i));
+                    }
+                } 
+            }
+            //Case 4: incorrect comparator
+            else{
+                return new List<V>;
+            }
+            
+            return list;
         }
         
     } // End of class LeafNode
