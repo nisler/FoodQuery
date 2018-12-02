@@ -93,6 +93,7 @@ public class Main extends Application {
 
     // Grid Settings
     mainGrid = new GridPane();
+    // TODO remove setGridLinesVisible when
     mainGrid.setGridLinesVisible(false);
     mainGrid.setAlignment(Pos.CENTER);
     mainGrid.setVgap(5);
@@ -131,24 +132,17 @@ public class Main extends Application {
     });
 
 
-    clearFoodEntry = new Button("Clear New Food Entry Fields");
+    clearFoodEntry = new Button("Clear New Food Text");
     clearFoodEntry.setOnAction(e -> {
       clearFoodEntry();
     });
 
-    Label counterLabel = new Label("Number of items in list:");
-    counterLabel.setAlignment(Pos.CENTER);
-    counterLabel.setMaxHeight(Double.MAX_VALUE);
-
-    counter = new TextField();
-    counter.setMaxWidth(50);
-    counter.setText(String.valueOf(foodObsList.size()));
 
 
     listMenu.prefWidth(750);
     listMenu.setPadding(new Insets(10, 10, 10, 10));
-    listMenu.getChildren().addAll(loadFileButton, saveFileButton, region, counterLabel, counter,
-        newFoodButton, clearFoodEntry);
+    listMenu.getChildren().addAll(loadFileButton, saveFileButton, region, newFoodButton,
+        clearFoodEntry);
     GridPane.setConstraints(listMenu, 0, 0);
 
     // FOOD ITEM INSERTER
@@ -156,10 +150,10 @@ public class Main extends Application {
 
     insertId = new TextField();
     insertId.setPrefWidth(165);
-    insertId.setPromptText("ID");
+    insertId.setPromptText("New Item ID");
     insertName = new TextField();
     insertName.setPrefWidth(320);
-    insertName.setPromptText("Name");
+    insertName.setPromptText("New Item Name");
     insertCals = new TextField();
     insertCals.setPrefWidth(50);
     insertCals.setPromptText("Calories");
@@ -182,6 +176,25 @@ public class Main extends Application {
 
 
     // FOOD TABLE
+    HBox foodTableHeader = new HBox();
+    Label foodTableTitle = new Label("Food List");
+    foodTableTitle.setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE);
+    foodTableTitle.setAlignment(Pos.CENTER);
+    HBox.setHgrow(foodTableTitle, Priority.ALWAYS);
+
+    // Region foodTitleRegion = new Region();
+    // HBox.setHgrow(foodTitleRegion, Priority.ALWAYS);
+
+    Label counterLabel = new Label("Number of items in list: ");
+    counterLabel.setAlignment(Pos.CENTER);
+    counterLabel.setMaxHeight(Double.MAX_VALUE);
+
+    counter = new TextField();
+    counter.setMaxWidth(40);
+    counter.setText(String.valueOf(foodObsList.size()));
+
+    foodTableHeader.getChildren().addAll(foodTableTitle, counterLabel, counter);
+    GridPane.setConstraints(foodTableHeader, 0, 2);
     // ID column
     foodID = new TableColumn<>("ID");
     foodID.setPrefWidth(165);
@@ -235,9 +248,13 @@ public class Main extends Application {
     foodListTable.getColumns().setAll(foodID, foodName, foodCals, foodCarbs, foodFat, foodProtein,
         foodFiber);
 
-    GridPane.setConstraints(foodListTable, 0, 2);
+    GridPane.setConstraints(foodListTable, 0, 3);
 
     // MENU TABLE
+    Label mealTableTitle = new Label("Meal List");
+    mealTableTitle.setAlignment(Pos.CENTER);
+    mealTableTitle.setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE);
+    GridPane.setConstraints(mealTableTitle, 2, 2);
     // ID column
     menuID = new TableColumn<>("ID");
     menuID.setPrefWidth(165);
@@ -290,7 +307,7 @@ public class Main extends Application {
     menuListTable.getColumns().setAll(menuID, menuName, menuCals, menuCarbs, menuFat, menuProtein,
         menuFiber);
 
-    GridPane.setConstraints(menuListTable, 2, 2);
+    GridPane.setConstraints(menuListTable, 2, 3);
 
     // TRANSFER ITEM PANE
     transferButtons = new VBox();
@@ -315,7 +332,7 @@ public class Main extends Application {
     });
 
     transferButtons.getChildren().addAll(addToMeal, removeFromMeal);
-    GridPane.setConstraints(transferButtons, 1, 2);
+    GridPane.setConstraints(transferButtons, 1, 3);
 
     // QUERY PANE
     nameQueryText = new TextField();
@@ -333,7 +350,7 @@ public class Main extends Application {
 
     nutrientQueryText = new TextField();
     nutrientQueryText.setMinWidth(500);
-    nutrientQueryText.setPromptText("Nutrient Filter Rules: <nutrient> <comparator> <value>");
+    nutrientQueryText.setPromptText("Nutrient Filter Rules: <nutrient> <comparator> <value> ");
     GridPane.setConstraints(nutrientQueryText, 0, 1);
 
     removeQueryButton = new Button("Remove Filters");
@@ -351,7 +368,7 @@ public class Main extends Application {
     queryGrid.getChildren().addAll(nameQueryText, queryButton, nutrientQueryText,
         removeQueryButton);
 
-    GridPane.setConstraints(queryGrid, 0, 3);
+    GridPane.setConstraints(queryGrid, 0, 4);
 
     // ANALYSIS
     analyzeButton = new Button("Analyze Meal");
@@ -359,11 +376,11 @@ public class Main extends Application {
     analyzeButton.setOnAction(e -> {
       analyzeMeal();
     });
-    GridPane.setConstraints(analyzeButton, 2, 3);
+    GridPane.setConstraints(analyzeButton, 2, 4);
 
     // WINDOW SETUP
-    mainGrid.getChildren().addAll(listMenu, foodItemInsert, foodListTable, menuListTable,
-        transferButtons, queryGrid, analyzeButton);
+    mainGrid.getChildren().addAll(listMenu, foodItemInsert, foodTableHeader, foodListTable,
+        menuListTable, mealTableTitle, transferButtons, queryGrid, analyzeButton);
 
     mainScene = new Scene(mainGrid);
     mainStage.setScene(mainScene);
@@ -372,8 +389,8 @@ public class Main extends Application {
   }
 
   /**
-   * Picks a file to open. The items of that file will replace the current Food Table items.
-   * FIXME loadFile currently only adds to Food Table, does not replace.
+   * Picks a file to open. The items of that file will replace the current Food Table items. FIXME
+   * loadFile currently only adds to Food Table, does not replace.
    */
   private void loadFile() {
     FileChooser fc = new FileChooser();
@@ -392,8 +409,8 @@ public class Main extends Application {
   }
 
   /**
-   * Takes the current Food Table items and creates a save file from those items.
-   * FIXME does not save filtered results yet
+   * Takes the current Food Table items and creates a save file from those items. FIXME does not
+   * save filtered results yet
    */
   private void saveFile() {
     FileChooser fc = new FileChooser();
@@ -408,8 +425,8 @@ public class Main extends Application {
   }
 
   /**
-   * Instantiates a FoodItem object from the information in the Food Entry Fields
-   * FIXME needs to handle empty fields. Especially nutrient fields. Empty fields turned to "0.0"?
+   * Instantiates a FoodItem object from the information in the Food Entry Fields FIXME needs to
+   * handle empty fields. Especially nutrient fields. Empty fields turned to "0.0"?
    */
   private void addCustomFood() {
     FoodItem addedFood = new FoodItem(insertId.getText(), insertName.getText());
@@ -454,8 +471,8 @@ public class Main extends Application {
   }
 
   /**
-   * Applies the name filter and/or nutrient filter to the Food List
-   * FIXME Cannot yet save filtered results to file
+   * Applies the name filter and/or nutrient filter to the Food List FIXME Cannot yet save filtered
+   * results to file
    */
   private void applyFilters() {
     queryFoodData = workingFoodData;
@@ -556,9 +573,10 @@ public class Main extends Application {
 
   /**
    * Displays a dialog box when an exception is thrown with information about the exception.
+   *
    * @param e Exception being thrown.
    */
-  public void showExceptionDialog(Exception e){
-//TODO add functionality
+  public void showExceptionDialog(Exception e) {
+    // TODO add functionality
   }
 }
