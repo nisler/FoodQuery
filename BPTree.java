@@ -503,6 +503,11 @@ public class BPTree<K extends Comparable<K>, V> implements BPTreeADT<K, V> {
                                 recursiveSearch((InternalNode) current,((InternalNode) current).children.get(i+1),key,comparator, list);
                                 break;
                             }
+                            else {
+                                //if yes, insert into the child between these two keys
+                                recursiveSearch((InternalNode) current,((InternalNode) current).children.get(i),key,comparator, list);
+                                break;
+                            }
                         }
                     }
                     else{
@@ -749,7 +754,7 @@ public class BPTree<K extends Comparable<K>, V> implements BPTreeADT<K, V> {
 //        System.out.println(tree.toString());
         tree.insert(8, 8);
 //        System.out.println(tree.toString());
-//        tree.insert(6, 6);
+        tree.insert(6, 6);
         System.out.println(tree.toString());
 //        tree.insert(12, 12);
 //        System.out.println(tree.toString());
@@ -758,7 +763,7 @@ public class BPTree<K extends Comparable<K>, V> implements BPTreeADT<K, V> {
 //        tree.insert(35, 35);     
 //        System.out.println(tree.toString());
         
-        System.out.println(tree.rangeSearch(4, "==").toString());
+        System.out.println(tree.rangeSearch(6, ">=").toString());
     }
 
 } // End of class BPTree
