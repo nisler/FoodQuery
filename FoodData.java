@@ -3,7 +3,7 @@
  * Project:    p5 - JavaFX Team Project
  * Course:     CS400
  * Authors:    Benjamin Nisler, Gabriella Cottiero, Olivia Gonzalez, 
- * 			   Timothy James, TOllan Renner
+ *             Timothy James, Tollan Renner
  * Due Date:   Saturday, December 15, 11:59pm
  *
  * Additional credits:
@@ -21,6 +21,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -44,8 +45,8 @@ public class FoodData implements FoodDataADT<FoodItem> {
      * Public constructor
      */
     public FoodData() {
-    	foodItemList = new ArrayList<>();
-    	indexes = new HashMap<>();
+        foodItemList = new ArrayList<>();
+        indexes = new HashMap<>();
     }
     
     /**
@@ -56,27 +57,27 @@ public class FoodData implements FoodDataADT<FoodItem> {
     @Override
     public void loadFoodItems(String filePath) {
         // TODO : Complete loading nutrients when BPTree is implemented
-    	// TODO : add more exception handling and input checks
-    	Stream<String> lines = null;
-    	try {
-			lines = Files.lines(Paths.get(filePath));
-			lines
-			.map(line -> {
-				List<String> tokens = Arrays.asList(line.split(","));
-				FoodItem foodItem = null;
-				if (tokens.size() > 0) {
-					foodItem = new FoodItem(tokens.get(0), tokens.get(1));	
-				}
-				return foodItem;
-			})
-			.forEach(item -> {
-				if (item != null) {
-					addFoodItem(item);
-				}
-			});
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+        // TODO : add more exception handling and input checks
+        Stream<String> lines = null;
+        try {
+            lines = Files.lines(Paths.get(filePath));
+            lines
+            .map(line -> {
+                List<String> tokens = Arrays.asList(line.split(","));
+                FoodItem foodItem = null;
+                if (tokens.size() > 0) {
+                    foodItem = new FoodItem(tokens.get(0), tokens.get(1));  
+                }
+                return foodItem;
+            })
+            .forEach(item -> {
+                if (item != null) {
+                    addFoodItem(item);
+                }
+            });
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     /**
@@ -89,20 +90,48 @@ public class FoodData implements FoodDataADT<FoodItem> {
      */
     @Override
     public List<FoodItem> filterByName(String substring) {
-    	List<FoodItem> filteredFoodItemList = foodItemList.stream()
-    			.filter(item -> item.getName().toLowerCase().contains(substring.toLowerCase()))
-    			.collect(Collectors.toList());
-    	return filteredFoodItemList;
+        List<FoodItem> filteredFoodItemList = foodItemList.stream()
+                .filter(item -> item.getName().toLowerCase().contains(substring.toLowerCase()))
+                .collect(Collectors.toList());
+        return filteredFoodItemList;
     }
 
     /**
-     * TODO
-     */
-    @Override
-    public List<FoodItem> filterByNutrients(List<String> rules) {
-        // TODO : Complete
-        return null;
+   * Gets all the food items that fulfill ALL the provided rules
+   *
+   * @param rules list, e.g. ["calories >= 50.0", "calories <= 200.0", "fiber == 2.5"]
+   * @return list of filtered food items; if no food item matched, return empty list
+   */
+  @Override
+  public List<FoodItem> filterByNutrients(List<String> rules) {
+    return foodItemList.stream().filter(rules.stream().map(rule -> nutrientPredicate(rule))
+        .reduce(Predicate::and).orElse(x -> true)).collect(Collectors.toList());
+  }
+
+  /**
+   * Validates and converts a string rule to a predicate
+   *
+   * @param rule string, e.g. "calories >= 50.0"
+   * @return FoodItem predicate, or null if the rule could not be parsed
+   */
+  private Predicate<FoodItem> nutrientPredicate(String rule) {
+    if (!rule.matches("[a-z]+ [><=]= \\d*\\.?\\d+")) {
+      System.err.printf("Invalid rule: %s%n", rule);
+      return p -> false;
     }
+
+    String[] splitted = rule.split(" ");
+
+    // TODO nutrient string validation
+    // EnumUtils.isValidEnum(Nutrients.class, splitted[0]);
+    if (indexes.get(splitted[0]) == null) {
+      System.err.printf("Invalid nutrient: %s%n", splitted[0]);
+      return p -> false;
+    }
+
+    return p -> indexes.get(splitted[0]).rangeSearch(Double.parseDouble(splitted[2]), splitted[1])
+        .contains(p);
+  }
 
     /**
      * Adds a food item to the loaded data
@@ -111,7 +140,7 @@ public class FoodData implements FoodDataADT<FoodItem> {
      */
     @Override
     public void addFoodItem(FoodItem foodItem) {
-    	foodItemList.add(foodItem);
+        foodItemList.add(foodItem);
     }
 
     /**
@@ -130,32 +159,32 @@ public class FoodData implements FoodDataADT<FoodItem> {
      * 
      * @param filename the name of the file and location of it being saved
      */
-	@Override
-	public void saveFoodItems(String filename) {
-		// TODO : add nutrients
-		// TODO : more exception handling and file output checks
-		List<FoodItem> sortedFoodItemList = foodItemList.stream()
-				.sorted((item1, item2) -> item1.getName().compareToIgnoreCase(item2.getName()))
-				.collect(Collectors.toList());
-		
-		try (PrintWriter printwriter = new PrintWriter(Files.newBufferedWriter(Paths.get(filename)))) {
-			sortedFoodItemList.forEach(item -> {
-				StringBuilder itemString = new StringBuilder();
-				itemString.append(item.getID() + ",");
-				itemString.append(item.getName() + ",");
-				
-				Set<String> nutrientSet = item.getNutrients().keySet();
-				for (String nutrient : nutrientSet) {
-					itemString.append(nutrient + ",");
-					itemString.append(item.getNutrientValue(nutrient) + ",");
-				}
-				
-				printwriter.println(itemString.toString());
-			});
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-	}
+    @Override
+    public void saveFoodItems(String filename) {
+        // TODO : add nutrients
+        // TODO : more exception handling and file output checks
+        List<FoodItem> sortedFoodItemList = foodItemList.stream()
+                .sorted((item1, item2) -> item1.getName().compareToIgnoreCase(item2.getName()))
+                .collect(Collectors.toList());
+        
+        try (PrintWriter printwriter = new PrintWriter(Files.newBufferedWriter(Paths.get(filename)))) {
+            sortedFoodItemList.forEach(item -> {
+                StringBuilder itemString = new StringBuilder();
+                itemString.append(item.getID() + ",");
+                itemString.append(item.getName() + ",");
+                
+                Set<String> nutrientSet = item.getNutrients().keySet();
+                for (String nutrient : nutrientSet) {
+                    itemString.append(nutrient + ",");
+                    itemString.append(item.getNutrientValue(nutrient) + ",");
+                }
+                
+                printwriter.println(itemString.toString());
+            });
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+    }
 
 }

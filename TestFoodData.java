@@ -1,9 +1,10 @@
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
-
+import java.util.Arrays;
 import java.util.List;
-
+import java.util.stream.Collectors;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -105,5 +106,29 @@ public class TestFoodData {
 			fail("Unexpectedly caught: " + e);
 		}
 	}
+	
+	@Test
+    public void test09FilterByNutrientsInvalid() {
+        try {         
+            List<String> rules = Arrays.asList("calories <> 200.0", "sugar == 3.0", "invalid");
+            foodData.loadFoodItems("foodItems.csv"); 
+            assertTrue(foodData.filterByNutrients(rules).isEmpty());           
+        } catch (Exception e) {
+            fail("Unexpectedly caught: " + e);
+        }
+    }
+	
+	@Test
+    public void test09FilterByNutrients() {
+        try {         
+            List<String> rules = Arrays.asList("calories >= 50.0", "calories <= 200.0", "fiber == 3.0");
+            List<String> resultIDs = Arrays.asList("55578545507a5ec8205bd6bd", "553bd4071c0097d62ef82121", "55578538f6274ff415e61103", "5505dcc077b7c8f122a48282");
+            foodData.loadFoodItems("foodItems.csv");            
+            List<FoodItem> expected = foodData.getAllFoodItems().stream().filter(item -> resultIDs.contains(item.getID())).collect(Collectors.toList());            
+            assertEquals(expected, foodData.filterByNutrients(rules));
+        } catch (Exception e) {
+            fail("Unexpectedly caught: " + e);
+        }
+    }
 
 }
