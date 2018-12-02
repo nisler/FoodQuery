@@ -99,13 +99,14 @@ public class BPTree<K extends Comparable<K>, V> implements BPTreeADT<K, V> {
         List<V> list = new ArrayList<V>();
       //handle case where root is a leaf node (root is only node) separately
         if (root instanceof BPTree.LeafNode) {
-            root.rangeSearch(key, comparator);
+            ((LeafNode)root).rangeSearch(key, comparator, list);
         }
         
         //otherwise use recursion to find the correct leaf to start searching in
         else {
-            list = ((InternalNode)root).recursiveSearch(null, root, key, comparator, list);
+            ((InternalNode)root).recursiveSearch(null, root, key, comparator, list);
         }
+        
         return list;
     }
     
@@ -165,24 +166,7 @@ public class BPTree<K extends Comparable<K>, V> implements BPTreeADT<K, V> {
             keys = new ArrayList<K>();
         }
         
-        /**
-         * Inserts key and value in the appropriate leaf node 
-         * and balances the tree if required by splitting
-         *  
-         * @param key
-         * @param value
-         */
-        abstract void insert(K key, V value);
-        
-        /**
-         * Recursive helper for insert
-         * @param prev previous (parent) node in the tree
-         * @param root root if the current subtree
-         * @param key the key that is being inserted into the tree
-         * @param value the value associated with that key
-         * @return returns the new root of this subtree
-         */
-        abstract Node recursiveInsert(InternalNode prev, Node root, K key, V value);
+        protected abstract void insert(K key, V value);
 
         /**
          * Gets the first leaf key of the tree
@@ -202,7 +186,7 @@ public class BPTree<K extends Comparable<K>, V> implements BPTreeADT<K, V> {
          * (non-Javadoc)
          * @see BPTree#rangeSearch(java.lang.Object, java.lang.String)
          */
-        abstract List<V> rangeSearch(K key, String comparator);
+        abstract void rangeSearch(K key, String comparator, List<V> list);
 
         /**
          * Returns true if node is overfull
@@ -284,14 +268,6 @@ public class BPTree<K extends Comparable<K>, V> implements BPTreeADT<K, V> {
             return false;
         }
         
-        /**
-         * Not currently using
-         * (non-Javadoc)
-         * @see BPTree.Node#insert(java.lang.Comparable, java.lang.Object)
-         */
-        void insert(K key, V value) {
-            return;
-        }
         
         /**
          * Recursive helper for inserting into this subtree where current is the root
@@ -458,59 +434,69 @@ public class BPTree<K extends Comparable<K>, V> implements BPTreeADT<K, V> {
          * (non-Javadoc)
          * @see BPTree.Node#rangeSearch(java.lang.Comparable, java.lang.String)
          */
-        List<V> rangeSearch(K key, String comparator) {
-            List<V> list = new ArrayList<V>();
-            return recursiveSearch(null, this, key, comparator, list);
+        void rangeSearch(K key, String comparator, List<V> list) {
+            recursiveSearch(null, this, key, comparator, list);
         }
         
-        List<V> recursiveSearch(InternalNode prev, Node current, K key, String comparator, List<V> list) {
+        void recursiveSearch(InternalNode prev, Node current, K key, String comparator, List<V> list) {
             //if the current node is null, don't do anything
-            if (current == null) return new ArrayList<V>();
+            if (current == null) return;
             
             //if the current node is a leaf, we should search it
             if (current instanceof BPTree.LeafNode) {
-                return current.rangeSearch(key, comparator);
+                current.rangeSearch(key, comparator, list);
             }
-            
-            //otherwise this node is internal and we need to find the appropriate leaf
             else {
                 
-                //edge case 1: key is < everything in this node
-                //so insert into the subtree with this node's first child as root
-                if (key.compareTo(current.keys.get(0)) < 0) {
-                    return new ArrayList<V>();
-                }
-                
-                //edge case 2: key is > everything in this node
-                //so insert into the subtree with this node's last child as root
-                else if (key.compareTo(current.keys.get(current.keys.size() - 1)) > 0) {
-                    return new ArrayList<V>();
-                }
-                
-                //otherwise loop through all keys and find where we should start our search
-                else {
+//                //edge case 1: key is < everything in this node
+//                if (key.compareTo(current.keys.get(0)) < 0) {
+//                    
+//                    return;
+//                }
+//                
+//                //edge case 2: key is > everything in this node
+//                else if (key.compareTo(current.keys.get(current.keys.size() - 1)) > 0) {
+//                    return;
+//                }
+//                
+//                //otherwise loop through all keys and find where we should start our search
+//                else {
                     if(comparator == "<="){
-                        for (int i = 0; i < current.keys.size()-1; i++) {
-                            //check if this key is less than or equal to current key
-                            if ((key.compareTo(current.keys.get(i)) < 0)) {
-                                //if yes, insert into the child between these two keys
-                                recursiveSearch((InternalNode) current,((InternalNode) current).children.get(i+1),key,comparator, list);
+                        for (int i = current.keys.size()-1; i >= 0; i++) {
+                          //check if this key is less than or equal to current key
+                            if ((key.compareTo(current.keys.get(i)) > 0)) {
+                                //if yes, search in child to right of current key
+                                recursiveSearch((InternalNode) current,((InternalNode) current).children.get(i+1), key, comparator, list);
+                                break;
+                            }
+                            else {
+                                //else search in child to left of current key
+                                recursiveSearch((InternalNode) current,((InternalNode) current).children.get(i), key, comparator, list);
                                 break;
                             }
                         }
                     }
                     else if(comparator == ">="){
-                        for (int i = 0; i < current.keys.size()-1; i++) {
+                        for (int i = 0; i < current.keys.size(); i++) {
                             //check if this key is less than or equal to current key
-                            if ((key.compareTo(current.keys.get(i)) > 0)) {
-                                //if yes, insert into the child between these two keys
-                                recursiveSearch((InternalNode) current,((InternalNode) current).children.get(i+1),key,comparator, list);
+                            if ((key.compareTo(current.keys.get(i)) < 0)) {
+                                //if yes, search in child to right of current key
+                                recursiveSearch((InternalNode) current,((InternalNode) current).children.get(i), key, comparator, list);
+                                break;
+                            }
+                            else if(i > 0){
+                                //else search in child to left of current key
+                                recursiveSearch((InternalNode) current,((InternalNode) current).children.get(i-1), key, comparator, list);
+                                break;
+                            }
+                            else {
+                                recursiveSearch((InternalNode) current,((InternalNode) current).children.get(i), key, comparator, list);
                                 break;
                             }
                         }
                     }
                     else if(comparator == "=="){
-                        for (int i = 0; i < current.keys.size()-1; i++) {
+                        for (int i = 0; i < current.keys.size(); i++) {
                             //check if this key is less than or equal to current key
                             if ((key.compareTo(current.keys.get(i)) == 0)) {
                                 //if yes, insert into the child between these two keys
@@ -520,17 +506,18 @@ public class BPTree<K extends Comparable<K>, V> implements BPTreeADT<K, V> {
                         }
                     }
                     else{
-                        return new ArrayList<V>();
+                        return;
                     }
-                }
+                //}
                 
             }
-            
-            //return whatever the current list is
-            return list;
         }
-        
-    
+
+        @Override
+        protected void insert(K key, V value) {
+            // TODO Auto-generated method stub
+            
+        }
     } // End of class InternalNode
     
     
@@ -553,7 +540,7 @@ public class BPTree<K extends Comparable<K>, V> implements BPTreeADT<K, V> {
         
         // Reference to the previous leaf node
         LeafNode previous;
-        
+        //
         /**
          * Package constructor
          * initializes empty list of values, keys
@@ -562,7 +549,6 @@ public class BPTree<K extends Comparable<K>, V> implements BPTreeADT<K, V> {
             super();
             values = new ArrayList<V>();
         }
-        
         
         /**
          * returns the first key stored in this leaf
@@ -589,7 +575,7 @@ public class BPTree<K extends Comparable<K>, V> implements BPTreeADT<K, V> {
          * @param key - key to be inserted
          * @param value - value associated with the key
          */
-        void insert(K key, V value) {
+        protected void insert(K key, V value) {
         	//edge case #0 - nothing in list
         	if (keys.size() == 0) {
         		keys.add(key);
@@ -668,23 +654,31 @@ public class BPTree<K extends Comparable<K>, V> implements BPTreeADT<K, V> {
          * (non-Javadoc)
          * @see BPTree.Node#rangeSearch(Comparable, String)
          */
-        List<V> rangeSearch(K key, String comparator) {
-            List<V> list = new ArrayList<V>();
+       void rangeSearch(K key, String comparator, List<V> list){
             // Case 1:  ">=
             if(comparator == ">="){
-                for(int i=0; i < keys.size(); i++){
-                    if((key.compareTo(keys.get(i)) >= 0)){
-                        list.add(values.get(i));
-                    }
-                }
-            }
-            //Case 2: "<="
-            else if(comparator == "<="){
                 for(int i=0; i < keys.size(); i++){
                     if((key.compareTo(keys.get(i)) <= 0)){
                         list.add(values.get(i));
                     }
-                }           
+                }
+                
+                if(this.next !=null) {
+                    next.rangeSearch(key, comparator, list);
+                }
+                
+            }
+            //Case 2: "<="
+            else if(comparator == "<="){
+                for(int i = 0; i < keys.size(); i++){
+                    if((key.compareTo(keys.get(i)) >= 0)){
+                        list.add(values.get(i));
+                    }
+                }  
+                if(this.previous !=null) {
+                    previous.rangeSearch(key, comparator, list);
+                }
+                
             }
             //Case 3: "=="
             else if(comparator == "=="){
@@ -692,24 +686,17 @@ public class BPTree<K extends Comparable<K>, V> implements BPTreeADT<K, V> {
                     if((key.compareTo(keys.get(i)) == 0)){
                         list.add(values.get(i));
                     }
-                } 
+                }
+                
+                if(this.next != null) {
+                    next.rangeSearch(key, comparator, list);
+                }
             }
             //Case 4: incorrect comparator
             else{
-                return new ArrayList<V>();
+                return;
             }
-            
-            return list;
         }
-
-
-        @Override
-        BPTree<K, V>.Node recursiveInsert(BPTree<K, V>.InternalNode prev,
-                BPTree<K, V>.Node root, K key, V value) {
-            // TODO Auto-generated method stub
-            return null;
-        }
-        
     } // End of class LeafNode
     
     
@@ -718,6 +705,9 @@ public class BPTree<K extends Comparable<K>, V> implements BPTreeADT<K, V> {
      * It shows a simple example of the use of this class
      * and its related types.
      * 
+     * @param args
+     */
+    /**
      * @param args
      */
     public static void main(String[] args) {
@@ -736,13 +726,13 @@ public class BPTree<K extends Comparable<K>, V> implements BPTreeADT<K, V> {
         // does not ensure BPTree is implemented correctly
         // just that it functions as a data structure with
         // insert, rangeSearch, and toString() working.
-        List<Double> list = new ArrayList<>();
-        for (int i = 0; i < 400; i++) {
-            Double j = dd[rnd1.nextInt(4)];
-            list.add(j);
-            bpTree.insert(j, j);
-            System.out.println("\n\nTree structure:\n" + bpTree.toString());
-        }
+//        List<Double> list = new ArrayList<>();
+//        for (int i = 0; i < 400; i++) {
+//            Double j = dd[rnd1.nextInt(4)];
+//            list.add(j);
+//            bpTree.insert(j, j);
+//            System.out.println("\n\nTree structure:\n" + bpTree.toString());
+//        }
         /**
         List<Double> filteredValues = bpTree.rangeSearch(0.2d, ">=");
         System.out.println("Filtered values: " + filteredValues.toString());
@@ -750,26 +740,25 @@ public class BPTree<K extends Comparable<K>, V> implements BPTreeADT<K, V> {
         
         BPTree<Integer, Integer> tree = new BPTree<Integer,Integer>(3);
         tree.insert(5, 5);
-        System.out.println(tree.toString());
+//        System.out.println(tree.toString());
         tree.insert(7, 7);
-        System.out.println(tree.toString());
+//        System.out.println(tree.toString());
         tree.insert(4, 4);
-        System.out.println(tree.toString());
+//        System.out.println(tree.toString());
         tree.insert(3, 3);
-        System.out.println(tree.toString());
+//        System.out.println(tree.toString());
         tree.insert(8, 8);
+//        System.out.println(tree.toString());
+//        tree.insert(6, 6);
         System.out.println(tree.toString());
-        tree.insert(6, 6);
-        System.out.println(tree.toString());
-        tree.insert(12, 12);
-        System.out.println(tree.toString());
-        tree.insert(15, 15);
-        System.out.println(tree.toString());
-        tree.insert(35, 35);
+//        tree.insert(12, 12);
+//        System.out.println(tree.toString());
+//        tree.insert(15, 15);
+//        System.out.println(tree.toString());
+//        tree.insert(35, 35);     
+//        System.out.println(tree.toString());
         
-        System.out.println(tree.toString());
-        
-        System.out.println(tree.rangeSearch(10, "<=").toString());
+        System.out.println(tree.rangeSearch(4, "==").toString());
     }
 
 } // End of class BPTree
