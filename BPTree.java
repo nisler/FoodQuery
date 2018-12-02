@@ -759,6 +759,8 @@ public class BPTree<K extends Comparable<K>, V> implements BPTreeADT<K, V> {
         tree.insert(35, 35);
         
         System.out.println(tree.toString());
+        
+        System.out.println(tree.rangeSearch(10, "<=").toString());
     }
 
 } // End of class BPTree
