@@ -120,12 +120,9 @@ public class FoodData implements FoodDataADT<FoodItem> {
       return p -> false;
     }
 
-    String[] splitted = rule.split(" ");
-
-    // TODO nutrient string validation
-    // EnumUtils.isValidEnum(Nutrients.class, splitted[0]);
+    String[] splitted = rule.split(" ");    
     if (indexes.get(splitted[0]) == null) {
-      System.err.printf("Invalid nutrient: %s%n", splitted[0]);
+      System.err.printf("Nutrient not found: %s%n", splitted[0]);
       return p -> false;
     }
 

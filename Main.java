@@ -1,6 +1,6 @@
 /**
  * Filename: Main.java Project: p5 - JavaFX Team Project Course: CS400 Authors: Benjamin Nisler,
- * Gabriella Cottiero, Olivia Gonzalez, Timothy James, TOllan Renner Due Date: Saturday, December
+ * Gabriella Cottiero, Olivia Gonzalez, Timothy James, Tollan Renner Due Date: Saturday, December
  * 15, 11:59pm
  *
  * Additional credits:
@@ -11,16 +11,22 @@
 import java.io.File;
 import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Collectors;
 import javafx.application.Application;
 import javafx.beans.property.SimpleDoubleProperty;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
+import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.geometry.HPos;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
+import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.Label;
+import javafx.scene.control.ListView;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
@@ -59,7 +65,13 @@ public class Main extends Application {
 
   // Application's text fields
   TextField insertId, insertName, insertCals, insertCarbs, insertFat, insertProtein, insertFiber,
-      nameQueryText, nutrientQueryText, counter;
+      nameQueryText, nutrientValue, counter;
+  
+  // nutrient rules
+  GridPane nutrientRuleGrid;
+  ChoiceBox<String> nutrientChoice, comparatorChoice;
+  ObservableList<String> rules = FXCollections.observableArrayList();
+  ListView<String> rulesList = new ListView<String>(rules);
 
   // Applications data structures
   // Underlying foodlist object
@@ -348,16 +360,37 @@ public class Main extends Application {
     GridPane.setConstraints(queryButton, 1, 0);
     GridPane.setRowSpan(queryButton, 2);
 
-    nutrientQueryText = new TextField();
-    nutrientQueryText.setMinWidth(500);
-    nutrientQueryText.setPromptText("Nutrient Filter Rules: <nutrient> <comparator> <value> ");
-    GridPane.setConstraints(nutrientQueryText, 0, 1);
+    // nutrient rule filters   
+    nutrientChoice = new ChoiceBox<String>(FXCollections.observableArrayList("calories", "fat", "carbohydrate", "fiber", "protein"));
+    GridPane.setConstraints(nutrientChoice, 0, 0);
+    comparatorChoice = new ChoiceBox<String>(FXCollections.observableArrayList(">=", "<=", "=="));
+    GridPane.setConstraints(comparatorChoice, 1, 0);
+    nutrientValue = new TextField();
+    nutrientValue.textProperty().addListener(new ChangeListener<String>() {
+      @Override
+      public void changed(ObservableValue<? extends String> observable, String oldValue, String newValue) {
+          if (!newValue.matches("\\d*\\.?\\d*")) {  // only allow numerics
+            nutrientValue.setText(oldValue);
+          }
+      }
+    });
+    GridPane.setConstraints(nutrientValue, 2, 0);
+    rulesList.setMaxHeight(0);  
+    rules.addListener(new ListChangeListener<String>() {
+      @Override
+      public void onChanged(Change<? extends String> c) {       
+        rulesList.setMaxHeight(rules.size() * nameQueryText.getHeight());
+      }   
+    });   
+    GridPane.setConstraints(rulesList, 3, 0);
+    nutrientRuleGrid = new GridPane();
+    nutrientRuleGrid.getChildren().addAll(nutrientChoice, comparatorChoice, nutrientValue, rulesList);
+    GridPane.setConstraints(nutrientRuleGrid, 0, 1);
 
     removeQueryButton = new Button("Remove Filters");
     removeQueryButton.setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE);
     removeQueryButton.setOnAction(e -> {
-      nameQueryText.clear();
-      nutrientQueryText.clear();
+      nameQueryText.clear();      
       clearFilters();
     });
     GridPane.setConstraints(removeQueryButton, 2, 0);
@@ -365,11 +398,9 @@ public class Main extends Application {
 
     queryGrid = new GridPane();
     queryGrid.setAlignment(Pos.CENTER);
-    queryGrid.getChildren().addAll(nameQueryText, queryButton, nutrientQueryText,
-        removeQueryButton);
-
+    queryGrid.getChildren().addAll(nameQueryText, queryButton, nutrientRuleGrid, removeQueryButton);
     GridPane.setConstraints(queryGrid, 0, 4);
-
+    
     // ANALYSIS
     analyzeButton = new Button("Analyze Meal");
     analyzeButton.setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE);
@@ -476,17 +507,30 @@ public class Main extends Application {
    */
   private void applyFilters() {
     queryFoodData = workingFoodData;
+    List<FoodItem> nameFilter = queryFoodData.getAllFoodItems();
+    List<FoodItem> ruleFilter = queryFoodData.getAllFoodItems();
+    
     if (!nameQueryText.getText().isEmpty()) {
-      filteredList = queryFoodData.filterByName(nameQueryText.getText());
+      nameFilter = queryFoodData.filterByName(nameQueryText.getText());
     }
+    
+    if (nutrientChoice.getValue() != null && comparatorChoice.getValue() != null && !nutrientValue.getText().isEmpty()) {
+      StringBuilder ruleBuilder = new StringBuilder();
+      ruleBuilder.append(nutrientChoice.getValue()).append(" ");
+      ruleBuilder.append(comparatorChoice.getValue()).append(" ");
+      ruleBuilder.append(nutrientValue.getText());
+      String rule = ruleBuilder.toString();
+      rules.add(rule);
+      nutrientChoice.setValue(null);
+      comparatorChoice.setValue(null);
+      nutrientValue.clear();      
+    }   
+    if (!rules.isEmpty()) {
+      ruleFilter = queryFoodData.filterByNutrients(rules);
+    }
+    
+    filteredList = nameFilter.stream().filter(ruleFilter::contains).collect(Collectors.toList());
 
-    // if (!nutrientQueryText.getText().isEmpty()) {
-    // String[] rulesArray = nutrientQueryText.getText().split(",");
-    // List<FoodItem> nutFilterList = queryFoodData.filterByNutrients(Arrays.asList(rulesArray));
-    // for (FoodItem i : nutFilterList) {
-    // queryFoodData.addFoodItem(i);
-    // }
-    // }
     refreshFoodTable(filteredList);
   }
 
@@ -494,6 +538,10 @@ public class Main extends Application {
    * Resets the food table to how it was before filtering
    */
   private void clearFilters() {
+    rules.clear();
+    nutrientChoice.setValue(null);
+    comparatorChoice.setValue(null);
+    nutrientValue.clear();
     refreshFoodTable(workingFoodData.getAllFoodItems());
   }
 
