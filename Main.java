@@ -9,11 +9,8 @@
  */
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
-import javax.swing.GroupLayout.Alignment;
 import javafx.application.Application;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.collections.FXCollections;
@@ -23,7 +20,6 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
-import javafx.scene.control.Dialog;
 import javafx.scene.control.Label;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
@@ -92,8 +88,8 @@ public class Main extends Application {
   public void start(Stage primaryStage) {
     // MainStage Settings
     mainStage = new Stage();
-    mainStage.setTitle("Menu Selector");
-    mainStage.setMaximized(false);
+    mainStage.setTitle("Meal Analyzer");
+    mainStage.setMaximized(true);
 
     // Grid Settings
     mainGrid = new GridPane();
@@ -129,13 +125,13 @@ public class Main extends Application {
     Region region = new Region();
     HBox.setHgrow(region, Priority.ALWAYS);
 
-    newFoodButton = new Button("Add Food Item");
+    newFoodButton = new Button("Add New Food Item");
     newFoodButton.setOnAction(e -> {
       addCustomFood();
     });
 
 
-    clearFoodEntry = new Button("Clear Entry Fields");
+    clearFoodEntry = new Button("Clear New Food Entry Fields");
     clearFoodEntry.setOnAction(e -> {
       clearFoodEntry();
     });
@@ -290,7 +286,7 @@ public class Main extends Application {
         c -> new SimpleDoubleProperty(c.getValue().getNutrientValue("calories")).asObject());
 
     menuListTable = new TableView<FoodItem>(mealObsList);
-    menuListTable.setPrefWidth(750);
+    menuListTable.setPrefWidth(485);
     menuListTable.getColumns().setAll(menuID, menuName, menuCals, menuCarbs, menuFat, menuProtein,
         menuFiber);
 
@@ -337,10 +333,10 @@ public class Main extends Application {
 
     nutrientQueryText = new TextField();
     nutrientQueryText.setMinWidth(500);
-    nutrientQueryText.setPromptText("Nutrient Filter Rules");
+    nutrientQueryText.setPromptText("Nutrient Filter Rules: <nutrient> <comparator> <value>");
     GridPane.setConstraints(nutrientQueryText, 0, 1);
 
-    removeQueryButton = new Button("Clear Queries");
+    removeQueryButton = new Button("Remove Filters");
     removeQueryButton.setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE);
     removeQueryButton.setOnAction(e -> {
       nameQueryText.clear();
@@ -556,5 +552,13 @@ public class Main extends Application {
     Scene scene = new Scene(grid);
     window.setScene(scene);
     window.showAndWait();
+  }
+
+  /**
+   * Displays a dialog box when an exception is thrown with information about the exception.
+   * @param e Exception being thrown.
+   */
+  public void showExceptionDialog(Exception e){
+//TODO add functionality
   }
 }
