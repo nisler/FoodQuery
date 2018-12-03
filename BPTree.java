@@ -91,13 +91,14 @@ public class BPTree<K extends Comparable<K>, V> implements BPTreeADT<K, V> {
      */
     @Override
     public List<V> rangeSearch(K key, String comparator) {
+        //return an empty list if the comparator is invalid
         if (!comparator.contentEquals(">=") && 
             !comparator.contentEquals("==") && 
             !comparator.contentEquals("<=") )
             return new ArrayList<V>();
         
         List<V> list = new ArrayList<V>();
-      //handle case where root is a leaf node (root is only node) separately
+        //handle case where root is a leaf node (root is only node) separately
         if (root instanceof BPTree.LeafNode) {
             ((LeafNode)root).rangeSearch(key, comparator, list);
         }
@@ -447,23 +448,9 @@ public class BPTree<K extends Comparable<K>, V> implements BPTreeADT<K, V> {
                 current.rangeSearch(key, comparator, list);
             }
             else {
-                
-//                //edge case 1: key is < everything in this node
-//                if (key.compareTo(current.keys.get(0)) < 0) {
-//                    
-//                    return;
-//                }
-//                
-//                //edge case 2: key is > everything in this node
-//                else if (key.compareTo(current.keys.get(current.keys.size() - 1)) > 0) {
-//                    return;
-//                }
-//                
-//                //otherwise loop through all keys and find where we should start our search
-//                else {
                     if(comparator == "<="){
                         for (int i = current.keys.size()-1; i >= 0; i++) {
-                          //check if this key is less than or equal to current key
+                            //check if this key is greater than or equal to current key
                             if ((key.compareTo(current.keys.get(i)) > 0)) {
                                 //if yes, search in child to right of current key
                                 recursiveSearch((InternalNode) current,((InternalNode) current).children.get(i+1), key, comparator, list);
@@ -485,11 +472,12 @@ public class BPTree<K extends Comparable<K>, V> implements BPTreeADT<K, V> {
                                 break;
                             }
                             else if(i > 0){
-                                //else search in child to left of current key
+                                //else search in child to left of current key assuming i is not 0
                                 recursiveSearch((InternalNode) current,((InternalNode) current).children.get(i-1), key, comparator, list);
                                 break;
                             }
                             else {
+                                //i is 0, search in leftmost child
                                 recursiveSearch((InternalNode) current,((InternalNode) current).children.get(i), key, comparator, list);
                                 break;
                             }
@@ -497,14 +485,14 @@ public class BPTree<K extends Comparable<K>, V> implements BPTreeADT<K, V> {
                     }
                     else if(comparator == "=="){
                         for (int i = 0; i < current.keys.size(); i++) {
-                            //check if this key is less than or equal to current key
+                            //check if this key is equal to current key
                             if ((key.compareTo(current.keys.get(i)) == 0)) {
-                                //if yes, insert into the child between these two keys
+                                //if yes, search in right child
                                 recursiveSearch((InternalNode) current,((InternalNode) current).children.get(i+1),key,comparator, list);
                                 break;
                             }
                             else {
-                                //if yes, insert into the child between these two keys
+                                //if no, search in left child
                                 recursiveSearch((InternalNode) current,((InternalNode) current).children.get(i),key,comparator, list);
                                 break;
                             }
