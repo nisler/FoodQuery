@@ -631,6 +631,7 @@ public class BPTree<K extends Comparable<K>, V> implements BPTreeADT<K, V> {
         	
         	//maintain linked list pointers
         	sibling.previous = this.previous;
+        	if(sibling.previous != null){sibling.previous.next = sibling;}
         	sibling.next = this;
         	this.previous = sibling;
         	
