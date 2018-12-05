@@ -2,6 +2,15 @@
 
 See Canvas assignment pages for details of the assignment.
 
+## Team Info: Final Project Group 6
+
+Team Members: 
+* Benjamin Nisler, nisler@wisc.edu
+* Gabriella Cottiero, gcottiero@wisc.edu
+* Olivia Gonzalez, odgonzalez2@wisc.edu
+* Timothy James, twjames2@wisc.edu
+* Tollan Renner, trenner@wisc.edu
+
 ## Download and install JDK 8
 
 https://www.oracle.com/technetwork/java/javase/downloads/jdk8-downloads-2133151.html
@@ -45,5 +54,3 @@ rmdir FoodQuery                                          # remove the FoodQuery 
 ### Or, download files as in previous assignments from the assignment page
 
 https://pages.cs.wisc.edu/~deppeler/cs400/assignments/p5/files/
-
-Benjamin Nisler edited...
