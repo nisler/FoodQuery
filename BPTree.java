@@ -481,14 +481,18 @@ public class BPTree<K extends Comparable<K>, V> implements BPTreeADT<K, V> {
                     else if(comparator.equals("==")){
                         for (int i = 0; i < current.keys.size(); i++) {
                             //check if this key is equal to current key
-                            if ((key.compareTo(current.keys.get(i)) == 0)) {
+                            if ((key.compareTo(current.keys.get(i)) < 0)){
                                 //if yes, search in right child
-                                recursiveSearch(((InternalNode) current).children.get(i+1),key,comparator, list);
+                                recursiveSearch(((InternalNode) current).children.get(i),key,comparator, list);
+                                break;
+                            }
+                            else if (i == current.keys.size()){
+                                recursiveSearch(((InternalNode) current).children.get(i),key,comparator, list);
                                 break;
                             }
                             else {
                                 //if no, search in left child
-                                recursiveSearch(((InternalNode) current).children.get(i),key,comparator, list);
+                                recursiveSearch(((InternalNode) current).children.get(i+1),key,comparator, list);
                                 break;
                             }
                         }
@@ -647,7 +651,7 @@ public class BPTree<K extends Comparable<K>, V> implements BPTreeADT<K, V> {
             // Case 1:  ">=
             if(comparator.equals(">=")){
                 for(int i=0; i < keys.size(); i++){
-                    if((key.compareTo(keys.get(i)) <= 0)){
+                    if(key.compareTo(keys.get(i)) <= 0 || key.compareTo(keys.get(i)) <= 0){
                         list.add(values.get(i));
                     }
                 }
@@ -660,7 +664,7 @@ public class BPTree<K extends Comparable<K>, V> implements BPTreeADT<K, V> {
             //Case 2: "<="
             else if(comparator.equals("<=")){
                 for(int i = 0; i < keys.size(); i++){
-                    if((key.compareTo(keys.get(i)) >= 0)){
+                    if(key.compareTo(keys.get(i)) >= 0 || key.compareTo(keys.get(i))==0){
                         list.add(values.get(i));
                     }
                 }  
@@ -671,7 +675,7 @@ public class BPTree<K extends Comparable<K>, V> implements BPTreeADT<K, V> {
             }
             //Case 3: "=="
             else if(comparator.equals("==")){
-                for(int i=0; i < keys.size(); i++){
+                for(int i = keys.size()-1; i > 0; i--){
                     if((key.compareTo(keys.get(i)) == 0)){
                         list.add(values.get(i));
                     }
@@ -750,7 +754,7 @@ public class BPTree<K extends Comparable<K>, V> implements BPTreeADT<K, V> {
         tree.insert(35, 35);     
 //        System.out.println(tree.toString());
         
-        System.out.println(tree.rangeSearch(17, "==").toString());
+        System.out.println(tree.rangeSearch(4, "==").toString());
     }
 
 } // End of class BPTree
