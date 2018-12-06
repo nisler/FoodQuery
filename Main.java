@@ -23,7 +23,10 @@ import javafx.geometry.HPos;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
+import javafx.scene.control.ButtonType;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
@@ -286,7 +289,8 @@ public class Main extends Application {
     GridPane.setConstraints(transferButtons, 1, 1);
 
     // FILTER PANE
-    Label currentFilterLabel = new Label("Currently filtering: ");
+    Label currentFilterLabel = new Label("Current filter: ");
+    currentFilterLabel.setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE);
     TextField currentFilter = new TextField();
     currentFilter.setPromptText("Food List currently has no filters");
     currentFilter.setEditable(false);
@@ -294,9 +298,7 @@ public class Main extends Application {
     Button clearFilters = new Button("Clear Filters");
     HBox filterStatus = new HBox(currentFilterLabel, currentFilter, clearFilters);
 
-
     Label filterLabel = new Label("Food List Filter");
-    filterLabel.setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE);
     filterLabel.setAlignment(Pos.CENTER);
 
     Label nameFilter1 = new Label("Show food with ");
@@ -313,11 +315,12 @@ public class Main extends Application {
 
     Label andOr = new Label("Show food that has ");
     andOr.setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE);
-        comparatorChoice = new ComboBox<String>(FXCollections.observableArrayList("More than",
-        "More than or equal to", "Exactly", "Less than or equal to", "Less than"));
+    comparatorChoice = new ComboBox<String>(FXCollections
+        .observableArrayList("More than or equal to", "Exactly", "Less than or equal to"));
     comparatorChoice.setPromptText("-More or Less than-");
     nutrientValue = new TextField();
     nutrientValue.setPromptText("-amount-");
+    nutrientValue.setPrefWidth(75);
     nutrientValue.textProperty().addListener(new ChangeListener<String>() {
       @Override
       public void changed(ObservableValue<? extends String> observable, String oldValue,
@@ -605,17 +608,11 @@ public class Main extends Application {
 
   /**
    * Displays a dialog box when an exception is thrown with information about the exception.
+   *
    * @param e Exception being thrown.
    */
-  public void showExceptionDialog(Exception e) {
-    // TODO add functionality
-    exceptStage = new Stage();
-    Text exceptText = new Text(e.getMessage());
-    Button acceptButton = new Button("OK");
-    VBox exceptPane = new VBox(exceptText, acceptButton);
-
-    Scene exceptScene = new Scene(exceptPane, 300, 250);
-    exceptStage.setScene(exceptScene);
-    exceptStage.showAndWait();
+  public static void showExceptionAlert(Exception e) {
+    Alert exception = new Alert(AlertType.WARNING, e.getMessage(), ButtonType.OK);
+    exception.showAndWait();
   }
 }
