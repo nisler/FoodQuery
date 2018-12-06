@@ -13,20 +13,26 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
-import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.geometry.HPos;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
-import javafx.scene.control.ChoiceBox;
+import javafx.scene.control.ButtonType;
+import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
+import javafx.scene.control.Menu;
+import javafx.scene.control.MenuBar;
+import javafx.scene.control.MenuItem;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
@@ -34,7 +40,6 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
-import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextAlignment;
@@ -42,6 +47,7 @@ import javafx.stage.FileChooser;
 import javafx.stage.FileChooser.ExtensionFilter;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+import javafx.stage.StageStyle;
 
 /**
  * Entry point of the FoodQuery Program Houses GUI code for now.
@@ -49,15 +55,14 @@ import javafx.stage.Stage;
 public class Main extends Application {
 
   // Application's stage
-  Stage mainStage;
+  Stage mainStage, exceptStage;
   // Stage's Scene
   Scene mainScene;
   // Scene's overarching grid
   GridPane mainGrid, queryGrid;
 
   // Application's buttons
-  Button loadFileButton, saveFileButton, newFoodButton, clearFoodEntry, addToMeal, removeFromMeal,
-      queryButton, removeQueryButton, analyzeButton;
+  Button addToMeal, removeFromMeal, queryButton, removeQueryButton, analyzeButton;
 
   // Applications Containers
   VBox transferButtons, queries;
@@ -65,11 +70,14 @@ public class Main extends Application {
 
   // Application's text fields
   TextField insertId, insertName, insertCals, insertCarbs, insertFat, insertProtein, insertFiber,
-      nameQueryText, nutrientValue, counter;
-  
+      nameQueryText, nutrientValue, nameFilterText;
+
+  Label counterLabel;
+
   // nutrient rules
   GridPane nutrientRuleGrid;
-  ChoiceBox<String> nutrientChoice, comparatorChoice;
+  ComboBox<String> nutrientChoice;
+  ComboBox<String> comparatorChoice;
   ObservableList<String> rules = FXCollections.observableArrayList();
   ListView<String> rulesList = new ListView<String>(rules);
 
@@ -80,10 +88,10 @@ public class Main extends Application {
   ObservableList<FoodItem> foodObsList, mealObsList, queryObsList;
   // the list used in the menu
   List<FoodItem> filteredList;
-  TableView<FoodItem> foodListTable, menuListTable;
-  TableColumn<FoodItem, String> foodID, foodName, menuID, menuName;
-  TableColumn<FoodItem, Double> foodCals, foodCarbs, foodFat, foodProtein, foodFiber, menuCals,
-      menuCarbs, menuFat, menuProtein, menuFiber;
+  TableView<FoodItem> foodListTable, mealListTable;
+  TableColumn<FoodItem, String> foodID, foodName, menuID, mealName;
+  TableColumn<FoodItem, Double> foodCals, foodCarbs, foodFat, foodProtein, foodFiber, mealCals,
+      mealCarbs, mealFat, mealProtein, mealFiber;
 
   Comparator<FoodItem> tableSort = new Comparator<FoodItem>() {
     @Override
@@ -98,10 +106,12 @@ public class Main extends Application {
 
   @Override
   public void start(Stage primaryStage) {
+
     // MainStage Settings
     mainStage = new Stage();
     mainStage.setTitle("Meal Analyzer");
-    mainStage.setMaximized(true);
+    mainStage.setMaximized(false);
+
 
     // Grid Settings
     mainGrid = new GridPane();
@@ -120,72 +130,20 @@ public class Main extends Application {
     foodObsList = FXCollections.observableArrayList(workingFoodData.getAllFoodItems());
     mealObsList = FXCollections.observableArrayList();
 
-    // FOOD LIST MENU
-    listMenu = new HBox();
+    // Menubar
+    Menu fileMenu = new Menu("Food List");
+    MenuItem loadList = new MenuItem("Load Food List From File");
+    loadList.setOnAction(e -> loadFile());
+    MenuItem saveList = new MenuItem("Save Current Food List");
+    saveList.setOnAction(e -> saveFile());
+    fileMenu.getItems().addAll(loadList, saveList);
 
-    // FOOD LIST LOAD
-    loadFileButton = new Button("Load Food List");
-    loadFileButton.setOnAction(e -> {
-      loadFile();
-    });
+    Menu foodItemMenu = new Menu("Food Item");
+    MenuItem addFood = new MenuItem("Add New Food Item To List");
+    addFood.setOnAction(e -> addCustomFood());
+    foodItemMenu.getItems().addAll(addFood);
 
-    // FOOD LIST SAVE
-    saveFileButton = new Button("Save Food List");
-    saveFileButton.setOnAction(e -> {
-      saveFile();
-    });
-
-    Region region = new Region();
-    HBox.setHgrow(region, Priority.ALWAYS);
-
-    newFoodButton = new Button("Add New Food Item");
-    newFoodButton.setOnAction(e -> {
-      addCustomFood();
-    });
-
-
-    clearFoodEntry = new Button("Clear New Food Text");
-    clearFoodEntry.setOnAction(e -> {
-      clearFoodEntry();
-    });
-
-
-
-    listMenu.prefWidth(750);
-    listMenu.setPadding(new Insets(10, 10, 10, 10));
-    listMenu.getChildren().addAll(loadFileButton, saveFileButton, region, newFoodButton,
-        clearFoodEntry);
-    GridPane.setConstraints(listMenu, 0, 0);
-
-    // FOOD ITEM INSERTER
-    foodItemInsert = new HBox();
-
-    insertId = new TextField();
-    insertId.setPrefWidth(165);
-    insertId.setPromptText("New Item ID");
-    insertName = new TextField();
-    insertName.setPrefWidth(320);
-    insertName.setPromptText("New Item Name");
-    insertCals = new TextField();
-    insertCals.setPrefWidth(50);
-    insertCals.setPromptText("Calories");
-    insertCarbs = new TextField();
-    insertCarbs.setPrefWidth(50);
-    insertCarbs.setPromptText("Carbs");
-    insertFat = new TextField();
-    insertFat.setPrefWidth(50);
-    insertFat.setPromptText("Fat");
-    insertProtein = new TextField();
-    insertProtein.setPrefWidth(50);
-    insertProtein.setPromptText("Protein");
-    insertFiber = new TextField();
-    insertFiber.setPrefWidth(50);
-    insertFiber.setPromptText("Fiber");
-    foodItemInsert.getChildren().addAll(insertId, insertName, insertCals, insertCarbs, insertFat,
-        insertProtein, insertFiber);
-
-    GridPane.setConstraints(foodItemInsert, 0, 1);
-
+    MenuBar menuBar = new MenuBar(fileMenu, foodItemMenu);
 
     // FOOD TABLE
     HBox foodTableHeader = new HBox();
@@ -194,24 +152,13 @@ public class Main extends Application {
     foodTableTitle.setAlignment(Pos.CENTER);
     HBox.setHgrow(foodTableTitle, Priority.ALWAYS);
 
-    // Region foodTitleRegion = new Region();
-    // HBox.setHgrow(foodTitleRegion, Priority.ALWAYS);
-
-    Label counterLabel = new Label("Number of items in list: ");
+    counterLabel = new Label("Number of items in list: " + foodObsList.size());
     counterLabel.setAlignment(Pos.CENTER);
     counterLabel.setMaxHeight(Double.MAX_VALUE);
 
-    counter = new TextField();
-    counter.setMaxWidth(40);
-    counter.setText(String.valueOf(foodObsList.size()));
+    foodTableHeader.getChildren().addAll(foodTableTitle, counterLabel);
+    GridPane.setConstraints(foodTableHeader, 0, 0);
 
-    foodTableHeader.getChildren().addAll(foodTableTitle, counterLabel, counter);
-    GridPane.setConstraints(foodTableHeader, 0, 2);
-    // ID column
-    foodID = new TableColumn<>("ID");
-    foodID.setPrefWidth(165);
-    foodID.setSortable(false);
-    foodID.setCellValueFactory(new PropertyValueFactory<>("ID"));
 
     // Name column
     foodName = new TableColumn<>("Name");
@@ -226,19 +173,19 @@ public class Main extends Application {
     foodCals.setCellValueFactory(
         c -> new SimpleDoubleProperty(c.getValue().getNutrientValue("calories")).asObject());
 
-    // Carbs column
-    foodCarbs = new TableColumn<>("Carbs");
-    foodCarbs.setPrefWidth(50);
-    foodCarbs.setSortable(false);
-    foodCarbs.setCellValueFactory(
-        c -> new SimpleDoubleProperty(c.getValue().getNutrientValue("carbohydrate")).asObject());
-
     // Fat column
     foodFat = new TableColumn<>("Fat");
     foodFat.setPrefWidth(50);
     foodFat.setSortable(false);
     foodFat.setCellValueFactory(
         c -> new SimpleDoubleProperty(c.getValue().getNutrientValue("fat")).asObject());
+
+    // Carbs column
+    foodCarbs = new TableColumn<>("Carbs");
+    foodCarbs.setPrefWidth(50);
+    foodCarbs.setSortable(false);
+    foodCarbs.setCellValueFactory(
+        c -> new SimpleDoubleProperty(c.getValue().getNutrientValue("carbohydrate")).asObject());
 
     // Protein column
     foodProtein = new TableColumn<>("Protein");
@@ -256,70 +203,65 @@ public class Main extends Application {
 
     foodListTable = new TableView<FoodItem>(foodObsList);
     FXCollections.sort(foodObsList, tableSort);
-    foodListTable.setPrefWidth(750);
-    foodListTable.getColumns().setAll(foodID, foodName, foodCals, foodCarbs, foodFat, foodProtein,
+    foodListTable.setPrefWidth(585);
+    foodListTable.getColumns().setAll(foodName, foodCals, foodFat, foodCarbs, foodProtein,
         foodFiber);
 
-    GridPane.setConstraints(foodListTable, 0, 3);
+    GridPane.setConstraints(foodListTable, 0, 1);
 
     // MENU TABLE
     Label mealTableTitle = new Label("Meal List");
     mealTableTitle.setAlignment(Pos.CENTER);
     mealTableTitle.setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE);
-    GridPane.setConstraints(mealTableTitle, 2, 2);
-    // ID column
-    menuID = new TableColumn<>("ID");
-    menuID.setPrefWidth(165);
-    menuID.setSortable(false);
-    menuID.setCellValueFactory(new PropertyValueFactory<>("ID"));
+    GridPane.setConstraints(mealTableTitle, 2, 0);
 
     // Name column
-    menuName = new TableColumn<>("Name");
-    menuName.setPrefWidth(320);
-    menuName.setSortable(false);
-    menuName.setCellValueFactory(new PropertyValueFactory<>("name"));
+    mealName = new TableColumn<>("Name");
+    mealName.setPrefWidth(320);
+    mealName.setSortable(false);
+    mealName.setCellValueFactory(new PropertyValueFactory<>("name"));
 
     // Calories column
-    menuCals = new TableColumn<>("Calories");
-    menuCals.setPrefWidth(50);
-    menuCals.setSortable(false);
-    menuCals.setCellValueFactory(
+    mealCals = new TableColumn<>("Calories");
+    mealCals.setPrefWidth(50);
+    mealCals.setSortable(false);
+    mealCals.setCellValueFactory(
         c -> new SimpleDoubleProperty(c.getValue().getNutrientValue("calories")).asObject());
 
-    // Carbs column
-    menuCarbs = new TableColumn<>("Carbs");
-    menuCarbs.setPrefWidth(50);
-    menuCarbs.setSortable(false);
-    menuCarbs.setCellValueFactory(
-        c -> new SimpleDoubleProperty(c.getValue().getNutrientValue("carbohydrate")).asObject());
-
     // Fat column
-    menuFat = new TableColumn<>("Fat");
-    menuFat.setPrefWidth(50);
-    menuFat.setSortable(false);
-    menuFat.setCellValueFactory(
+    mealFat = new TableColumn<>("Fat");
+    mealFat.setPrefWidth(50);
+    mealFat.setSortable(false);
+    mealFat.setCellValueFactory(
         c -> new SimpleDoubleProperty(c.getValue().getNutrientValue("fat")).asObject());
 
+    // Carbs column
+    mealCarbs = new TableColumn<>("Carbs");
+    mealCarbs.setPrefWidth(50);
+    mealCarbs.setSortable(false);
+    mealCarbs.setCellValueFactory(
+        c -> new SimpleDoubleProperty(c.getValue().getNutrientValue("carbohydrate")).asObject());
+
     // Protein column
-    menuProtein = new TableColumn<>("Protein");
-    menuProtein.setPrefWidth(50);
-    menuProtein.setSortable(false);
-    menuProtein.setCellValueFactory(
+    mealProtein = new TableColumn<>("Protein");
+    mealProtein.setPrefWidth(50);
+    mealProtein.setSortable(false);
+    mealProtein.setCellValueFactory(
         c -> new SimpleDoubleProperty(c.getValue().getNutrientValue("protein")).asObject());
 
     // Fiber column
-    menuFiber = new TableColumn<>("fiber");
-    menuFiber.setPrefWidth(50);
-    menuFiber.setSortable(false);
-    menuFiber.setCellValueFactory(
+    mealFiber = new TableColumn<>("fiber");
+    mealFiber.setPrefWidth(50);
+    mealFiber.setSortable(false);
+    mealFiber.setCellValueFactory(
         c -> new SimpleDoubleProperty(c.getValue().getNutrientValue("calories")).asObject());
 
-    menuListTable = new TableView<FoodItem>(mealObsList);
-    menuListTable.setPrefWidth(485);
-    menuListTable.getColumns().setAll(menuID, menuName, menuCals, menuCarbs, menuFat, menuProtein,
-        menuFiber);
+    mealListTable = new TableView<FoodItem>(mealObsList);
+    mealListTable.setPrefWidth(585);
+    mealListTable.getColumns().setAll(mealName, mealCals, mealFat, mealCarbs, mealProtein,
+        mealFiber);
 
-    GridPane.setConstraints(menuListTable, 2, 3);
+    GridPane.setConstraints(mealListTable, 2, 1);
 
     // TRANSFER ITEM PANE
     transferButtons = new VBox();
@@ -344,79 +286,76 @@ public class Main extends Application {
     });
 
     transferButtons.getChildren().addAll(addToMeal, removeFromMeal);
-    GridPane.setConstraints(transferButtons, 1, 3);
+    GridPane.setConstraints(transferButtons, 1, 1);
 
-    // QUERY PANE
-    nameQueryText = new TextField();
-    nameQueryText.setMinWidth(500);
-    nameQueryText.setPromptText("Filter by Name");
-    GridPane.setConstraints(nameQueryText, 0, 0);
+    // FILTER PANE
+    Label currentFilterLabel = new Label("Current filter: ");
+    currentFilterLabel.setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE);
+    TextField currentFilter = new TextField();
+    currentFilter.setPromptText("Food List currently has no filters");
+    currentFilter.setEditable(false);
+    currentFilter.setMaxWidth(Double.MAX_VALUE);
+    Button clearFilters = new Button("Clear Filters");
+    HBox filterStatus = new HBox(currentFilterLabel, currentFilter, clearFilters);
 
-    queryButton = new Button("Apply Filters");
-    queryButton.setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE);
-    queryButton.setOnAction(e -> {
+    Label filterLabel = new Label("Food List Filter");
+    filterLabel.setAlignment(Pos.CENTER);
+
+    Label nameFilter1 = new Label("Show food with ");
+    nameFilter1.setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE);
+    nameFilterText = new TextField();
+    nameFilterText.setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE);
+    nameFilterText.textProperty().addListener((observable, oldValue, newValue) -> {
       applyFilters();
     });
-    GridPane.setConstraints(queryButton, 1, 0);
-    GridPane.setRowSpan(queryButton, 2);
+    Label nameFilter2 = new Label(" in the name.");
+    nameFilter2.setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE);
 
-    // nutrient rule filters   
-    nutrientChoice = new ChoiceBox<String>(FXCollections.observableArrayList("calories", "fat", "carbohydrate", "fiber", "protein"));
-    GridPane.setConstraints(nutrientChoice, 0, 0);
-    comparatorChoice = new ChoiceBox<String>(FXCollections.observableArrayList(">=", "<=", "=="));
-    GridPane.setConstraints(comparatorChoice, 1, 0);
+    HBox nameFilter = new HBox(nameFilter1, nameFilterText, nameFilter2);
+
+    Label andOr = new Label("Show food that has ");
+    andOr.setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE);
+    comparatorChoice = new ComboBox<String>(FXCollections
+        .observableArrayList("More than or equal to", "Exactly", "Less than or equal to"));
+    comparatorChoice.setPromptText("-More or Less than-");
     nutrientValue = new TextField();
+    nutrientValue.setPromptText("-amount-");
+    nutrientValue.setPrefWidth(75);
     nutrientValue.textProperty().addListener(new ChangeListener<String>() {
       @Override
-      public void changed(ObservableValue<? extends String> observable, String oldValue, String newValue) {
-          if (!newValue.matches("\\d*\\.?\\d*")) {  // only allow numerics
-            nutrientValue.setText(oldValue);
-          }
+      public void changed(ObservableValue<? extends String> observable, String oldValue,
+          String newValue) {
+        if (!newValue.matches("\\d*\\.?\\d*")) { // only allow numerics
+          nutrientValue.setText(oldValue);
+        }
       }
     });
-    GridPane.setConstraints(nutrientValue, 2, 0);
-    rulesList.setMaxHeight(0);  
-    rules.addListener(new ListChangeListener<String>() {
-      @Override
-      public void onChanged(Change<? extends String> c) {       
-        rulesList.setMaxHeight(rules.size() * nameQueryText.getHeight());
-      }   
-    });   
-    GridPane.setConstraints(rulesList, 3, 0);
-    nutrientRuleGrid = new GridPane();
-    nutrientRuleGrid.getChildren().addAll(nutrientChoice, comparatorChoice, nutrientValue, rulesList);
-    GridPane.setConstraints(nutrientRuleGrid, 0, 1);
+    nutrientChoice = new ComboBox<String>(FXCollections.observableArrayList("calories",
+        "grams of fat", "carbohydrates", "grams of fiber", "grams of protein"));
+    nutrientChoice.setPromptText("-nutrient-");
+    Button addFilter = new Button("Add Filter");
+    HBox filterRow = new HBox(andOr, comparatorChoice, nutrientValue, nutrientChoice, addFilter);
 
-    removeQueryButton = new Button("Remove Filters");
-    removeQueryButton.setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE);
-    removeQueryButton.setOnAction(e -> {
-      nameQueryText.clear();      
-      clearFilters();
-    });
-    GridPane.setConstraints(removeQueryButton, 2, 0);
-    GridPane.setRowSpan(removeQueryButton, 2);
+    VBox filterPane = new VBox(filterLabel, filterStatus, nameFilter, filterRow);
 
-    queryGrid = new GridPane();
-    queryGrid.setAlignment(Pos.CENTER);
-    queryGrid.getChildren().addAll(nameQueryText, queryButton, nutrientRuleGrid, removeQueryButton);
-    GridPane.setConstraints(queryGrid, 0, 4);
-    
+    GridPane.setConstraints(filterPane, 0, 2);
+
     // ANALYSIS
     analyzeButton = new Button("Analyze Meal");
     analyzeButton.setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE);
     analyzeButton.setOnAction(e -> {
       analyzeMeal();
     });
-    GridPane.setConstraints(analyzeButton, 2, 4);
+    GridPane.setConstraints(analyzeButton, 2, 2);
 
     // WINDOW SETUP
-    mainGrid.getChildren().addAll(listMenu, foodItemInsert, foodTableHeader, foodListTable,
-        menuListTable, mealTableTitle, transferButtons, queryGrid, analyzeButton);
+    mainGrid.getChildren().addAll(foodTableHeader, foodListTable, mealListTable, mealTableTitle,
+        transferButtons, filterPane, analyzeButton);
+    VBox mainLayout = new VBox(menuBar, mainGrid);
 
-    mainScene = new Scene(mainGrid);
+    mainScene = new Scene(mainLayout);
     mainStage.setScene(mainScene);
     mainStage.show();
-
   }
 
   /**
@@ -429,9 +368,10 @@ public class Main extends Application {
     fc.setTitle("Load Food List");
     File file = fc.showOpenDialog(mainStage);
     if (file != null) {
+      masterFoodData = new FoodData();
       masterFoodData.loadFoodItems(file.toString());
       workingFoodData = masterFoodData;
-      refreshFoodTable(masterFoodData.getAllFoodItems());
+      refreshFoodTable(workingFoodData.getAllFoodItems());
     }
 
     else {
@@ -460,27 +400,73 @@ public class Main extends Application {
    * handle empty fields. Especially nutrient fields. Empty fields turned to "0.0"?
    */
   private void addCustomFood() {
-    FoodItem addedFood = new FoodItem(insertId.getText(), insertName.getText());
-    addedFood.addNutrient("calories", new Double(insertCals.getText()));
-    addedFood.addNutrient("carbohydrate", new Double(insertCarbs.getText()));
-    addedFood.addNutrient("fat", new Double(insertFat.getText()));
-    addedFood.addNutrient("protein", new Double(insertProtein.getText()));
-    addedFood.addNutrient("fiber", new Double(insertFiber.getText()));
-    workingFoodData.addFoodItem(addedFood);
-    refreshFoodTable(workingFoodData.getAllFoodItems());
-  }
+    Stage addItemStage = new Stage();
+    addItemStage.initStyle(StageStyle.UTILITY);
 
-  /**
-   * Erases all data in the food entry fields
-   */
-  private void clearFoodEntry() {
-    insertId.clear();
-    insertName.clear();
-    insertCals.clear();
-    insertCarbs.clear();
-    insertFat.clear();
-    insertProtein.clear();
-    insertFiber.clear();
+    Text addItemText = new Text(
+        "Please use the fields below to enter information about your food. Remember to fill all fields and nutrient values must be numbers.");
+    addItemText.setWrappingWidth(300);
+
+    // FOOD ITEM INSERTER
+    insertId = new TextField();
+    insertId.setPrefWidth(165);
+    insertId.setPromptText("New Item ID");
+
+    insertName = new TextField();
+    insertName.setPrefWidth(320);
+    insertName.setPromptText("New Item Name");
+
+    insertCals = new TextField();
+    insertCals.setPrefWidth(60);
+    insertCals.setPromptText("Calories");
+
+    insertCarbs = new TextField();
+    insertCarbs.setPrefWidth(60);
+    insertCarbs.setPromptText("Carbs");
+
+    insertFat = new TextField();
+    insertFat.setPrefWidth(60);
+    insertFat.setPromptText("Fat");
+
+    insertProtein = new TextField();
+    insertProtein.setPrefWidth(60);
+    insertProtein.setPromptText("Protein");
+
+    insertFiber = new TextField();
+    insertFiber.setPrefWidth(60);
+    insertFiber.setPromptText("Fiber");
+
+    foodItemInsert = new HBox(insertId, insertName, insertCals, insertCarbs, insertFat,
+        insertProtein, insertFiber);
+
+    Button addItem = new Button("OK");
+
+    addItem.setOnAction(e -> {
+      FoodItem addedFood = new FoodItem(insertId.getText(), insertName.getText());
+      addedFood.addNutrient("calories", new Double(insertCals.getText()));
+      addedFood.addNutrient("carbohydrate", new Double(insertCarbs.getText()));
+      addedFood.addNutrient("fat", new Double(insertFat.getText()));
+      addedFood.addNutrient("protein", new Double(insertProtein.getText()));
+      addedFood.addNutrient("fiber", new Double(insertFiber.getText()));
+      workingFoodData.addFoodItem(addedFood);
+      refreshFoodTable(workingFoodData.getAllFoodItems());
+      addItemStage.close();
+    });
+
+    Button cancel = new Button("Cancel");
+    cancel.setOnAction(e -> addItemStage.close());
+
+    HBox stageButtons = new HBox(addItem, cancel);
+    stageButtons.setPadding(new Insets(20, 20, 20, 20));
+    stageButtons.setAlignment(Pos.CENTER);
+
+    VBox addItemLayout = new VBox(addItemText, foodItemInsert, stageButtons);
+    addItemLayout.setPadding(new Insets(20, 20, 20, 20));
+    addItemLayout.setAlignment(Pos.CENTER);
+
+    addItemStage.setScene(new Scene(addItemLayout));
+    addItem.requestFocus();
+    addItemStage.showAndWait();
   }
 
   /**
@@ -496,8 +482,8 @@ public class Main extends Application {
    * Removes a selected item from the Meal List
    */
   private void removeFromMeal() {
-    if (!menuListTable.getSelectionModel().isEmpty()) {
-      mealObsList.remove(menuListTable.getSelectionModel().getSelectedItem());
+    if (!mealListTable.getSelectionModel().isEmpty()) {
+      mealObsList.remove(mealListTable.getSelectionModel().getSelectedItem());
     }
   }
 
@@ -509,12 +495,13 @@ public class Main extends Application {
     queryFoodData = workingFoodData;
     List<FoodItem> nameFilter = queryFoodData.getAllFoodItems();
     List<FoodItem> ruleFilter = queryFoodData.getAllFoodItems();
-    
-    if (!nameQueryText.getText().isEmpty()) {
-      nameFilter = queryFoodData.filterByName(nameQueryText.getText());
+
+    if (!nameFilterText.getText().isEmpty()) {
+      nameFilter = queryFoodData.filterByName(nameFilterText.getText());
     }
-    
-    if (nutrientChoice.getValue() != null && comparatorChoice.getValue() != null && !nutrientValue.getText().isEmpty()) {
+
+    if (nutrientChoice.getValue() != null && comparatorChoice.getValue() != null
+        && !nutrientValue.getText().isEmpty()) {
       StringBuilder ruleBuilder = new StringBuilder();
       ruleBuilder.append(nutrientChoice.getValue()).append(" ");
       ruleBuilder.append(comparatorChoice.getValue()).append(" ");
@@ -523,12 +510,12 @@ public class Main extends Application {
       rules.add(rule);
       nutrientChoice.setValue(null);
       comparatorChoice.setValue(null);
-      nutrientValue.clear();      
-    }   
+      nutrientValue.clear();
+    }
     if (!rules.isEmpty()) {
       ruleFilter = queryFoodData.filterByNutrients(rules);
     }
-    
+
     filteredList = nameFilter.stream().filter(ruleFilter::contains).collect(Collectors.toList());
 
     refreshFoodTable(filteredList);
@@ -556,7 +543,7 @@ public class Main extends Application {
     FXCollections.sort(foodObsList, tableSort);
     foodListTable.getItems().clear();
     foodListTable.setItems(foodObsList);
-    counter.setText(String.valueOf(foodObsList.size()));
+    counterLabel.setText("Number of items in list: " + foodObsList.size());
   }
 
   /**
@@ -624,7 +611,8 @@ public class Main extends Application {
    *
    * @param e Exception being thrown.
    */
-  public void showExceptionDialog(Exception e) {
-    // TODO add functionality
+  public static void showExceptionAlert(Exception e) {
+    Alert exception = new Alert(AlertType.WARNING, e.getMessage(), ButtonType.OK);
+    exception.showAndWait();
   }
 }

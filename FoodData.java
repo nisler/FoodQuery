@@ -56,7 +56,6 @@ public class FoodData implements FoodDataADT<FoodItem> {
      */
     @Override
     public void loadFoodItems(String filePath) {
-        // TODO : Complete loading nutrients when BPTree is implemented
         // TODO : add more exception handling and input checks
         Stream<String> lines = null;
         try {
@@ -66,7 +65,12 @@ public class FoodData implements FoodDataADT<FoodItem> {
                 List<String> tokens = Arrays.asList(line.split(","));
                 FoodItem foodItem = null;
                 if (tokens.size() > 0) {
-                    foodItem = new FoodItem(tokens.get(0), tokens.get(1));  
+                    foodItem = new FoodItem(tokens.get(0), tokens.get(1));
+                    foodItem.addNutrient(tokens.get(2), Double.parseDouble(tokens.get(3)));
+                    foodItem.addNutrient(tokens.get(4), Double.parseDouble(tokens.get(5)));
+                    foodItem.addNutrient(tokens.get(6), Double.parseDouble(tokens.get(7)));
+                    foodItem.addNutrient(tokens.get(8), Double.parseDouble(tokens.get(9)));
+                    foodItem.addNutrient(tokens.get(10), Double.parseDouble(tokens.get(11)));
                 }
                 return foodItem;
             })
