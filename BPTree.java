@@ -742,15 +742,15 @@ public class BPTree<K extends Comparable<K>, V> implements BPTreeADT<K, V> {
         tree.insert(8, 8);
 //        System.out.println(tree.toString());
         tree.insert(6, 6);
-        System.out.println(tree.toString());
-//        tree.insert(12, 12);
 //        System.out.println(tree.toString());
-//        tree.insert(15, 15);
+        tree.insert(12, 12);
 //        System.out.println(tree.toString());
-//        tree.insert(35, 35);     
+        tree.insert(15, 15);
+//        System.out.println(tree.toString());
+        tree.insert(35, 35);     
 //        System.out.println(tree.toString());
         
-        System.out.println(tree.rangeSearch(6, ">=").toString());
+        System.out.println(tree.rangeSearch(17, "==").toString());
     }
 
 } // End of class BPTree
