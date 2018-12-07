@@ -74,7 +74,7 @@ public class TestBTree {
         tree.insert(12, 12);
         tree.insert(15, 15);
         tree.insert(35, 35);
-        assertEquals("[15, 12, 8, 7, 5, 6, 4, 3]", tree.rangeSearch(15, "<=").toString());
+        assertEquals("[15, 12, 8, 7, 6, 5, 4, 3]", tree.rangeSearch(15, "<=").toString());
     }
     @Test
     public void testRangeSearchLessThanOrEqualToEmpty() {
