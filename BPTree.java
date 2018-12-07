@@ -566,7 +566,7 @@ public class BPTree<K extends Comparable<K>, V> implements BPTreeADT<K, V> {
                         for (int i = 0; i < current.keys.size(); i++) {
                             //check if this key is equal to current key
                             if ((key.compareTo(current.keys.get(i)) < 0)){
-                                //if yes, search in right child
+                                //if yes, search in left child
                                 recursiveSearch(((InternalNode) current).children.get(i),key,comparator, list, valueMap);
                                 break;
                             }
@@ -575,7 +575,7 @@ public class BPTree<K extends Comparable<K>, V> implements BPTreeADT<K, V> {
                                 break;
                             }
                             else {
-                                //if no, search in left child
+                                //if no, search in right child
                                 recursiveSearch(((InternalNode) current).children.get(i+1),key,comparator, list, valueMap);
                                 break;
                             }
@@ -798,7 +798,7 @@ public class BPTree<K extends Comparable<K>, V> implements BPTreeADT<K, V> {
                         	list.add(valuesArr.get(j));
                         }
                     }
-                    if((key.compareTo(keys.get(i))) > 0) {
+                    if((key.compareTo(keys.get(i))) < 0) {
                         return;
                     }
                 }
