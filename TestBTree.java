@@ -1,11 +1,11 @@
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
-import org.junit.BeforeClass;
-import org.junit.jupiter.api.Test;
+import org.junit.Test;
 
-class TestBTree {
+public class TestBTree {
     @Test
-    void testInsertMultiple() {
+    public void testInsertMultiple() {
         try {
             BPTree<Integer, Integer> tree = new BPTree<Integer,Integer>(3);
             for(int i = 0; i < 20; i++) {tree.insert(18, 18);}
@@ -16,7 +16,7 @@ class TestBTree {
         //TODO: check tree has 20 values?
     }
     @Test
-    void testRangeSearchGreaterThanOrEqualTo() {
+    public void testRangeSearchGreaterThanOrEqualTo() {
         BPTree<Integer, Integer> tree = new BPTree<Integer,Integer>(3);
         tree.insert(5,5);
         tree.insert(7, 7);
@@ -30,7 +30,7 @@ class TestBTree {
         assertEquals("[35]", tree.rangeSearch(17, ">=").toString());
     }
     @Test
-    void testRangeSearchGreaterThanOrEqualTo0() {
+    public void testRangeSearchGreaterThanOrEqualTo0() {
         BPTree<Integer, Integer> tree = new BPTree<Integer,Integer>(3);
         tree.insert(5,5);
         tree.insert(7, 7);
@@ -41,15 +41,15 @@ class TestBTree {
         tree.insert(12, 12);
         tree.insert(15, 15);
         tree.insert(35, 35);
-        assertEquals("[]", tree.rangeSearch(0, ">=").toString());
+        assertEquals("[3, 4, 5, 6, 7, 8, 12, 15, 35]", tree.rangeSearch(0, ">=").toString());
     }
     @Test
-    void testRangeSearchGreaterThanOrEqualToEmpty() {
+    public void testRangeSearchGreaterThanOrEqualToEmpty() {
         BPTree<Integer, Integer> tree = new BPTree<Integer,Integer>(3);
         assertEquals("[]", tree.rangeSearch(40, ">=").toString());
     }
     @Test
-    void testRangeSearchLessThanOrEqualTo() {
+    public void testRangeSearchLessThanOrEqualTo() {
         BPTree<Integer, Integer> tree = new BPTree<Integer,Integer>(3);
         tree.insert(5,5);
         tree.insert(7, 7);
@@ -63,7 +63,7 @@ class TestBTree {
         assertEquals("[]", tree.rangeSearch(0, "<=").toString());
     }
     @Test
-    void testRangeSearchLessThanOrEqualTo0() {
+    public void testRangeSearchLessThanOrEqualTo0() {
         BPTree<Integer, Integer> tree = new BPTree<Integer,Integer>(3);
         tree.insert(5,5);
         tree.insert(7, 7);
@@ -74,15 +74,15 @@ class TestBTree {
         tree.insert(12, 12);
         tree.insert(15, 15);
         tree.insert(35, 35);
-        assertEquals("[5, 7, 4, 3, 8, 6, 12, 15]", tree.rangeSearch(15, "<=").toString());
+        assertEquals("[15, 12, 8, 7, 5, 6, 4, 3]", tree.rangeSearch(15, "<=").toString());
     }
     @Test
-    void testRangeSearchLessThanOrEqualToEmpty() {
+    public void testRangeSearchLessThanOrEqualToEmpty() {
         BPTree<Integer, Integer> tree = new BPTree<Integer,Integer>(3);
         assertEquals("[]", tree.rangeSearch(20, "<=").toString());
     }
     @Test
-    void testRangeSearchEqualTo() {
+    public void testRangeSearchEqualTo() {
         BPTree<Integer, Integer> tree = new BPTree<Integer,Integer>(3);
         tree.insert(5,5);
         tree.insert(7, 7);
@@ -92,7 +92,7 @@ class TestBTree {
         assertEquals("[4]", tree.rangeSearch(4, "==").toString());
     }
     @Test
-    void testRangeSearchEqualTo0() {
+    public void testRangeSearchEqualTo0() {
         BPTree<Integer, Integer> tree = new BPTree<Integer,Integer>(3);
         tree.insert(5,5);
         tree.insert(7, 7);
@@ -100,7 +100,7 @@ class TestBTree {
         assertEquals("[]", tree.rangeSearch(0, "==").toString());
     }
     @Test
-    void testRangeSearchGreaterThanOrEqualToMulti() {
+    public void testRangeSearchGreaterThanOrEqualToMulti() {
         BPTree<Integer, Integer> tree = new BPTree<Integer,Integer>(3);
         tree.insert(5,5);
         tree.insert(7, 7);
@@ -113,11 +113,6 @@ class TestBTree {
         tree.insert(6, 6);
 
         assertEquals("[8, 8, 8, 8]", tree.rangeSearch(8, "==").toString());
-    }
-
-    @Test
-    void testToString() {
-        fail("Not yet implemented");
     }
 
 }
