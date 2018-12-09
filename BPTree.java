@@ -791,21 +791,17 @@ public class BPTree<K extends Comparable<K>, V> implements BPTreeADT<K, V> {
             }
             //Case 3: "=="
             else if(comparator.equals("==")){
-                for(int i = keys.size()-1; i > 0; i--){
-                    if((key.compareTo(keys.get(i)) == 0)){
-                        valuesArr = valueMap.get(keys.get(i));
-                        for (int j = 0; j < valuesArr.size(); j++) {
-                        	list.add(valuesArr.get(j));
-                        }
-                    }
-                    if((key.compareTo(keys.get(i))) < 0) {
-                        return;
+              for(int i = 0; i < keys.size(); i++){
+                if((key.compareTo(keys.get(i)) == 0)){
+                    valuesArr = valueMap.get(keys.get(i));
+                    for (int j = 0; j < valuesArr.size(); j++) {
+                        list.add(valuesArr.get(j));
                     }
                 }
-                
-                if(this.next != null) {
-                    next.rangeSearch(key, comparator, list, valueMap);
-                }
+              }                
+              if(this.next != null) {
+                  next.rangeSearch(key, comparator, list, valueMap);
+              }
             }
             //Case 4: incorrect comparator
             else{
