@@ -1,11 +1,15 @@
 /**
- * Filename: Main.java Project: p5 - JavaFX Team Project Course: CS400 Authors: Benjamin Nisler,
- * Gabriella Cottiero, Olivia Gonzalez, Timothy James, Tollan Renner Due Date: Saturday, December
- * 15, 11:59pm
+ * Filename: Main.java
+ * Project: p5 - JavaFX Team Project
+ * Course: CS400 Fall 2018
  *
- * Additional credits:
+ * @author Gabriella Cottiero, gcottiero@wisc.edu
+ * @author Olivia Gonzalez, odgonzalez2@wisc.edu
+ * @author Timothy James, twjames2@wis.edu
+ * @author Benjamin Nisler, nisler@wisc.edu
+ * @author Tollan Renner, trenner@wisc.edu
  *
- * Bugs or other notes:
+ * Due Date: Saturday, December 15, 11:59pm
  */
 
 import java.io.File;
@@ -37,6 +41,7 @@ import javafx.scene.control.TextField;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextAlignment;
@@ -46,43 +51,42 @@ import javafx.stage.Modality;
 import javafx.stage.Stage;
 
 /**
- * Entry point of the FoodQuery Program Houses GUI code for now.
+ * Entry point of the FoodQuery Application. Contains GUI and driver code.
  */
 public class Main extends Application {
 
   // Application's stage
-  Stage mainStage, exceptStage;
+  private Stage mainStage;
   // Stage's Scene
   Scene mainScene;
   // Scene's overarching grid
-  GridPane mainGrid, queryGrid;
+  GridPane mainGrid;
 
   // Application's buttons
-  Button addToMeal, removeFromMeal, queryButton, removeQueryButton, analyzeButton;
+  Button addToMeal, removeFromMeal, clearMeal, analyzeButton;
 
   // Applications Containers
-  VBox transferButtons, queries;
-  HBox listMenu, foodItemInsert;
+  VBox transferButtons;
+  HBox foodItemInsert;
 
   // Application's text fields
   TextField insertId, insertName, insertCals, insertCarbs, insertFat, insertProtein, insertFiber,
-      nameQueryText, nutrientValue, nameFilterText;
+      nutrientValue, nameFilterText;
 
   Label counterLabel;
 
   // nutrient rules
-  GridPane nutrientRuleGrid;
   ComboBox<String> nutrientChoice;
   ComboBox<String> comparatorChoice;
   ObservableList<String> rules = FXCollections.observableArrayList();
   ObservableList<String> filterTextList = FXCollections.observableArrayList();
-  ListView<String> rulesList = new ListView<String>(filterTextList);
+  ListView<String> rulesList = new ListView<>(filterTextList);
 
   // Applications data structures
   // Underlying foodlist object
   FoodData masterFoodData, workingFoodData, queryFoodData;
   // current viewable food list as it's being altered by filters or additions
-  ObservableList<FoodItem> foodObsList, mealObsList, queryObsList;
+  ObservableList<FoodItem> foodObsList, mealObsList;
   // the list used in the menu
   List<FoodItem> filteredList;
   TableView<FoodItem> foodListTable, mealListTable;
@@ -101,6 +105,7 @@ public class Main extends Application {
     launch(args);
   }
 
+  @SuppressWarnings("unchecked")
   @Override
   public void start(Stage primaryStage) {
 
@@ -141,6 +146,7 @@ public class Main extends Application {
 
     // FOOD TABLE
     Label foodTableTitle = new Label("Food List");
+    foodTableTitle.setStyle("-fx-font-weight: Bold");
     foodTableTitle.setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE);
     foodTableTitle.setAlignment(Pos.CENTER);
 
@@ -207,6 +213,7 @@ public class Main extends Application {
 
     // MENU TABLE
     Label mealTableTitle = new Label("Meal List");
+    mealTableTitle.setStyle("-fx-font-weight: Bold");
     mealTableTitle.setAlignment(Pos.CENTER);
     mealTableTitle.setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE);
     GridPane.setConstraints(mealTableTitle, 2, 0);
@@ -246,7 +253,7 @@ public class Main extends Application {
         c -> new SimpleDoubleProperty(c.getValue().getNutrientValue("protein")).asObject());
 
     // Fiber column
-    mealFiber = new TableColumn<>("fiber");
+    mealFiber = new TableColumn<>("Fiber");
     mealFiber.setPrefWidth(50);
     mealFiber.setSortable(false);
     mealFiber.setCellValueFactory(
@@ -284,11 +291,20 @@ public class Main extends Application {
       removeFromMeal();
     });
 
-    transferButtons.getChildren().addAll(addToMeal, removeFromMeal);
+    // CLEAR MEAL BUTTON
+    clearMeal = new Button("Clear All\nItems from Meal");
+    clearMeal.setMaxWidth(Double.MAX_VALUE);
+    clearMeal.setTextAlignment(TextAlignment.CENTER);
+    clearMeal.setOnAction(e -> {
+      clearMeal();
+    });
+
+    transferButtons.getChildren().addAll(addToMeal, removeFromMeal, clearMeal);
     GridPane.setConstraints(transferButtons, 1, 1);
 
     // FILTER PANE
     Label filterLabel = new Label("Food List Filter");
+    filterLabel.setStyle("-fx-font-weight: Bold");
     filterLabel.setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE);
     filterLabel.setAlignment(Pos.CENTER);
 
@@ -324,8 +340,9 @@ public class Main extends Application {
         }
       }
     });
-    nutrientChoice = new ComboBox<String>(FXCollections.observableArrayList("calories",
-        "grams of fat", "grams of carbohydrates", "grams of fiber", "grams of protein"));
+    nutrientChoice = new ComboBox<String>(
+        FXCollections.observableArrayList(Nutrient.CALORIES.getText(), Nutrient.FAT.getText(),
+            Nutrient.CARBOHYDRATE.getText(), Nutrient.PROTEIN.getText(), Nutrient.FIBER.getText()));
     nutrientChoice.setPromptText("-nutrient-");
 
     Button addFilter = new Button("Add");
@@ -338,22 +355,38 @@ public class Main extends Application {
     HBox filterRow = new HBox(andOr, comparatorChoice, nutrientValue, nutrientChoice, addFilter);
 
     VBox filterPane = new VBox(filterLabel, nameFilter, filterRow);
-    filterPane.setSpacing(5);
+    filterPane.setSpacing(10);
     filterPane.setPadding(new Insets(5, 5, 5, 5));
     GridPane.setConstraints(filterPane, 0, 2);
 
     rulesList = new ListView<String>(rules);
     rulesList.setPlaceholder(
         new Label("Filter by Nutrient List is Empty.\nAdd Filters with the 'Add' Button"));
-    rulesList.setPrefSize(300, 100);
+    rulesList.setMaxSize(Double.MAX_VALUE, 100);
     rulesList.setMaxHeight(100);
+    HBox.setHgrow(rulesList, Priority.ALWAYS);
 
-    Button clearFilters = new Button("Clear Filters");
-    clearFilters.setMaxWidth(Double.MAX_VALUE);
+    Button clearSelectedFilter = new Button("Remove\nSelected Filter");
+    clearSelectedFilter.setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE);
+    clearSelectedFilter.setOnAction(e -> {
+      removeFilter();
+    });
+    clearSelectedFilter.setTextAlignment(TextAlignment.CENTER);
+    VBox.setVgrow(clearSelectedFilter, Priority.ALWAYS);
+
+    Button clearFilters = new Button("Clear All\nFilters");
+    clearFilters.setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE);
     clearFilters.setOnAction(e -> {
       clearFilters();
     });
-    VBox listAndButtonBox = new VBox(rulesList, clearFilters);
+    clearFilters.setTextAlignment(TextAlignment.CENTER);
+    VBox.setVgrow(clearFilters, Priority.ALWAYS);
+
+    VBox listButtons = new VBox(clearSelectedFilter, clearFilters);
+    listButtons.setPadding(new Insets(0, 5, 0, 5));
+    listButtons.setSpacing(5);
+
+    HBox listAndButtonBox = new HBox(rulesList, listButtons);
     GridPane.setConstraints(listAndButtonBox, 0, 3);
 
     // ANALYSIS
@@ -501,6 +534,9 @@ public class Main extends Application {
     Button addItem = new Button("OK");
     addItem.setOnAction(action -> {
       try {
+        if (insertId.getText().isEmpty() || insertName.getText().isEmpty()) {
+          throw new NumberFormatException();
+        }
         FoodItem addedFood = new FoodItem(insertId.getText(), insertName.getText());
         addedFood.addNutrient("calories", new Double(insertCals.getText()));
         addedFood.addNutrient("fat", new Double(insertFat.getText()));
@@ -556,8 +592,14 @@ public class Main extends Application {
   }
 
   /**
-   * Applies the name filter and/or nutrient filter to the Food List. FIXME has validation issues.
-   * It may have something to do with the new Enums, but it might be in Food Item Validation.
+   * Clears every food item from the Meal List
+   */
+  private void clearMeal() {
+    mealObsList.clear();
+  }
+
+  /**
+   * Applies the name filter and/or nutrient filter to the Food List.
    */
   private void applyFilters() {
     queryFoodData = workingFoodData;
@@ -586,6 +628,16 @@ public class Main extends Application {
   }
 
   /**
+   * Resets the food table to how it was before filtering
+   */
+  private void removeFilter() {
+    if (!rulesList.getSelectionModel().isEmpty()) {
+      rules.remove(rulesList.getSelectionModel().getSelectedItem());
+    }
+    applyFilters();
+  }
+
+  /**
    * Swaps strings between a Comparator or Nutrient enums user readable text string to a filter rule
    * string.
    *
@@ -593,21 +645,21 @@ public class Main extends Application {
    * @return
    */
   private String translate(String string) {
-    if (string == Comparer.MORE.getText())
+    if (string.equals(Comparer.MORE.getText()))
       return Comparer.MORE.getRule();
-    if (string == Comparer.EQUALS.getText())
+    if (string.equals(Comparer.EQUALS.getText()))
       return Comparer.EQUALS.getRule();
-    if (string == Comparer.LESS.getText())
+    if (string.equals(Comparer.LESS.getText()))
       return Comparer.LESS.getRule();
-    if (string == Nutrient.CALORIES.getText())
+    if (string.equals(Nutrient.CALORIES.getText()))
       return Nutrient.CALORIES.getRule();
-    if (string == Nutrient.FAT.getText())
+    if (string.equals(Nutrient.FAT.getText()))
       return Nutrient.FAT.getRule();
-    if (string == Nutrient.CARBOHYDRATE.getText())
+    if (string.equals(Nutrient.CARBOHYDRATE.getText()))
       return Nutrient.CARBOHYDRATE.getRule();
-    if (string == Nutrient.PROTEIN.getText())
+    if (string.equals(Nutrient.PROTEIN.getText()))
       return Nutrient.PROTEIN.getRule();
-    if (string == Nutrient.FIBER.getText())
+    if (string.equals(Nutrient.FIBER.getText()))
       return Nutrient.FIBER.getRule();
 
     else {
@@ -668,8 +720,9 @@ public class Main extends Application {
       totalFiber += i.getNutrientValue("fiber");
     }
 
-    String nutriStr = totalCals + " calories\n" + totalCarbs + " carbohydrates\n" + totalFat
-        + " fat\n" + totalProtein + " protein\n" + totalFiber + " fiber\n\nBon Appetit!";
+    String nutriStr = totalCals + " calories\n" + totalFat + " grams of fat\n" + totalCarbs
+        + " grams of carbohydrates\n" + totalProtein + " grams of protein\n" + totalFiber
+        + " grams of fiber\n\nBon Appetit!";
     Text nutriTxt = new Text(nutriStr);
 
     Button closeButton = new Button("OK");
