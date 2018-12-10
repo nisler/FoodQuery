@@ -47,6 +47,9 @@ public class FoodData implements FoodDataADT<FoodItem> {
     public FoodData() {
         foodItemList = new ArrayList<>();
         indexes = new HashMap<>();
+        for (Nutrient nutrient : Nutrient.values()) {
+          indexes.put(nutrient.getRule(), new BPTree<>(4));          
+        } 
     }
     
     /**
@@ -108,6 +111,9 @@ public class FoodData implements FoodDataADT<FoodItem> {
    */
   @Override
   public List<FoodItem> filterByNutrients(List<String> rules) {
+    
+//    return foodItemList.stream().filter(nutrientPredicate(rules.get(0))).collect(Collectors.toList());
+    
     return foodItemList.stream().filter(rules.stream().map(rule -> nutrientPredicate(rule))
         .reduce(Predicate::and).orElse(x -> true)).collect(Collectors.toList());
   }
@@ -128,8 +134,8 @@ public class FoodData implements FoodDataADT<FoodItem> {
     if (indexes.get(splitted[0]) == null) {
       System.err.printf("Nutrient not found: %s%n", splitted[0]);
       return p -> false;
-    }
-
+    }    
+       
     return p -> indexes.get(splitted[0]).rangeSearch(Double.parseDouble(splitted[2]), splitted[1])
         .contains(p);
   }
@@ -142,6 +148,10 @@ public class FoodData implements FoodDataADT<FoodItem> {
     @Override
     public void addFoodItem(FoodItem foodItem) {
         foodItemList.add(foodItem);
+        HashMap<String, Double> nutrients = foodItem.getNutrients();
+        for (Nutrient nutrient : Nutrient.values()) {
+          indexes.get(nutrient.getRule()).insert(nutrients.get(nutrient.getRule()), foodItem);
+        }       
     }
 
     /**
