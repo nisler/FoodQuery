@@ -489,15 +489,17 @@ public class BPTree<K extends Comparable<K>, V> implements BPTreeADT<K, V> {
         Node split() {
         	
         	InternalNode sibling = new InternalNode();
+        	int halfPointKey = (keys.size())/2;
+        	int halfPointSize = (children.size())/2;
         	
         	//give everything to left of middle key to sibling
-        	for (int i = 0; i < (keys.size()/2); i++) {
+        	for (int i = 0; i < halfPointKey; i++) {
         		sibling.keys.add(keys.remove(0));
         	}
         	
         	//now distribute children
         	//sibling gets everything up to middle
-        	for (int k = 0; k <= children.size()/2; k++) {
+        	for (int k = 0; k < halfPointSize; k++) {
         		sibling.children.add(children.remove(0));
         	}
         	
@@ -808,6 +810,7 @@ public class BPTree<K extends Comparable<K>, V> implements BPTreeADT<K, V> {
         	
             // split leaf down the middle into two new leaves
         	LeafNode sibling = new LeafNode();
+        	int halfPoint = (keys.size()/2);
         	
         	//maintain linked list pointers
         	sibling.previous = this.previous;
@@ -816,7 +819,7 @@ public class BPTree<K extends Comparable<K>, V> implements BPTreeADT<K, V> {
         	this.previous = sibling;
         	
         	//give first half of values to sibling
-        	for (int i = 0; i < (keys.size()/2); i++){
+        	for (int i = 0; i < halfPoint; i++){
         		sibling.keys.add(keys.remove(0));
         	}
         	
@@ -954,7 +957,7 @@ public class BPTree<K extends Comparable<K>, V> implements BPTreeADT<K, V> {
         System.out.println(filteredValues.size());
         
         
-        BPTree<Integer, Integer> tree = new BPTree<Integer,Integer>(3);
+        BPTree<Integer, Integer> tree = new BPTree<Integer,Integer>(5);
         tree.insert(5, 5);
         tree.insert(5, 5);
         System.out.println(tree.toString());
@@ -979,7 +982,7 @@ public class BPTree<K extends Comparable<K>, V> implements BPTreeADT<K, V> {
         tree.insert(35, 12);
         
         tree.printValueList();
-        System.out.println(tree.rangeSearch(15, "<=").toString());
+        System.out.println(tree.rangeSearch(4, ">=").toString());
     }
 
 } // End of class BPTree
