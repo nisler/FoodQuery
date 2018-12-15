@@ -1,7 +1,5 @@
 /**
- * Filename: Main.java
- * Project: p5 - JavaFX Team Project
- * Course: CS400 Fall 2018
+ * Filename: Main.java Project: p5 - JavaFX Team Project Course: CS400 Fall 2018
  *
  * @author Gabriella Cottiero, gcottiero@wisc.edu
  * @author Olivia Gonzalez, odgonzalez2@wisc.edu
@@ -9,7 +7,7 @@
  * @author Benjamin Nisler, nisler@wisc.edu
  * @author Tollan Renner, trenner@wisc.edu
  *
- * Due Date: Saturday, December 15, 11:59pm
+ *         Due Date: Saturday, December 15, 11:59pm
  */
 
 import java.io.File;
@@ -97,7 +95,7 @@ public class Main extends Application {
   Comparator<FoodItem> tableSort = new Comparator<FoodItem>() {
     @Override
     public int compare(FoodItem item1, FoodItem item2) {
-      return item1.getName().compareTo(item2.getName());
+      return item1.getName().toLowerCase().compareTo(item2.getName().toLowerCase());
     }
   };
 
@@ -409,44 +407,55 @@ public class Main extends Application {
 
   /**
    * Picks a file to open. The items of that file will replace the current Food Table items.
+   *
+   * @throws Exception
    */
   private void loadFile() {
-    FileChooser fc = new FileChooser();
-    fc.getExtensionFilters().add(new ExtensionFilter("CSV Files", "*.csv"));
-    fc.setTitle("Load Food List");
-    File file = fc.showOpenDialog(mainStage);
-    if (file != null) {
-      masterFoodData = new FoodData();
-      masterFoodData.loadFoodItems(file.toString());
-      workingFoodData = masterFoodData;
-      refreshFoodTable(workingFoodData.getAllFoodItems());
+    try {
+      FileChooser fc = new FileChooser();
+      fc.getExtensionFilters().add(new ExtensionFilter("CSV Files", "*.csv"));
+      fc.setTitle("Load Food List");
+      File file = fc.showOpenDialog(mainStage);
+      if (file != null) {
+        masterFoodData = new FoodData();
+        masterFoodData.loadFoodItems(file.toString());
+        workingFoodData = masterFoodData;
+        refreshFoodTable(workingFoodData.getAllFoodItems());
+        foodListTable.scrollTo(0);
+        clearMeal();
+      }
+    } catch (Exception e) {
+      showExceptionAlert(e);
     }
 
-    else {
-      System.out.println("File not found");
-    }
   }
 
   /**
    * Takes the current Food Table items and creates a save file from those items.
    */
   private void saveFile() {
-    FileChooser fc = new FileChooser();
-    fc.getExtensionFilters().add(new ExtensionFilter("CSV Files", "*.csv"));
-    fc.setTitle("Save Food List");
-    File file = fc.showSaveDialog(mainStage);
-    if (file != null) {
-      masterFoodData.saveFoodItems(file.toString());
-    } else {
-      System.out.println("File not found");
+    try {
+      FileChooser fc = new FileChooser();
+      fc.getExtensionFilters().add(new ExtensionFilter("CSV Files", "*.csv"));
+      fc.setTitle("Save Food List");
+      File file = fc.showSaveDialog(mainStage);
+      if (file != null) {
+        masterFoodData.saveFoodItems(file.toString());
+      }
+    } catch (Exception e) {
+      showExceptionAlert(e);
     }
+
   }
 
   /**
    * Creates a dialog box that provides the user with the necessary fields to create a new food item
    * and add it to the list.
+   *
+   * @throws NumberFormatException if a food entry field is left empty
+   * @throws Exception
    */
-  private void addCustomFood() {
+  private void addCustomFood() throws NumberFormatException {
     Stage addItemStage = new Stage();
     addItemStage.setTitle("Adding a New Food Item");
 
@@ -547,6 +556,10 @@ public class Main extends Application {
         refreshFoodTable(workingFoodData.getAllFoodItems());
 
         addItemStage.close();
+
+        foodListTable.scrollTo(foodObsList.indexOf(addedFood) - 3);
+        foodListTable.getSelectionModel().select(addedFood);
+//        foodListTable.getFocusModel().focus(foodObsList.indexOf(addedFood));
       } catch (NumberFormatException e) {
         showExceptionAlert(
             new Exception("Please make sure all fields are filled out to create a new food item"));
@@ -578,7 +591,9 @@ public class Main extends Application {
    */
   private void addToMeal() {
     if (!foodListTable.getSelectionModel().isEmpty()) {
-      mealObsList.add(foodListTable.getSelectionModel().getSelectedItem());
+      FoodItem selectedItem = foodListTable.getSelectionModel().getSelectedItem();
+      mealObsList.add(selectedItem);
+      mealListTable.scrollTo(selectedItem);
     }
   }
 
@@ -642,7 +657,8 @@ public class Main extends Application {
    * string.
    *
    * @param string
-   * @return
+   * @throws Exception
+   * @return String of enum constant's rule
    */
   private String translate(String string) {
     if (string.equals(Comparer.MORE.getText()))
@@ -675,6 +691,7 @@ public class Main extends Application {
     nameFilterText.clear();
     rules.clear();
     refreshFoodTable(workingFoodData.getAllFoodItems());
+    foodListTable.scrollTo(0);
   }
 
   /**
