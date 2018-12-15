@@ -492,9 +492,6 @@ public class BPTree<K extends Comparable<K>, V> implements BPTreeADT<K, V> {
         	int halfPointKey = (keys.size())/2;
         	int halfPointChild = (children.size())/2;
         	
-        	System.out.println(keys);
-        	System.out.println(children);
-        	
         	//give everything to left of middle key to sibling
         	for (int i = 0; i < halfPointKey; i++) {
         		sibling.keys.add(keys.remove(0));
@@ -890,7 +887,6 @@ public class BPTree<K extends Comparable<K>, V> implements BPTreeADT<K, V> {
                         }
                     }
                 }  
-                System.out.println(keys);
                 if(this.previous !=null) {
                     previous.rangeSearch(key, comparator, list, valueMap);
                 }
@@ -1016,6 +1012,8 @@ public class BPTree<K extends Comparable<K>, V> implements BPTreeADT<K, V> {
         System.out.println(tree2.toString());
         tree2.insert(15, 15);
         System.out.println(tree2.toString());
+        
+        System.out.println(tree2.rangeSearch(26, "<="));
     }
 
 } // End of class BPTree
