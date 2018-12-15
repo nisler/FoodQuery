@@ -490,7 +490,10 @@ public class BPTree<K extends Comparable<K>, V> implements BPTreeADT<K, V> {
         	
         	InternalNode sibling = new InternalNode();
         	int halfPointKey = (keys.size())/2;
-        	int halfPointSize = (children.size())/2;
+        	int halfPointChild = (children.size())/2;
+        	
+        	System.out.println(keys);
+        	System.out.println(children);
         	
         	//give everything to left of middle key to sibling
         	for (int i = 0; i < halfPointKey; i++) {
@@ -499,7 +502,11 @@ public class BPTree<K extends Comparable<K>, V> implements BPTreeADT<K, V> {
         	
         	//now distribute children
         	//sibling gets everything up to middle
-        	for (int k = 0; k < halfPointSize; k++) {
+        	for (int k = 0; k < halfPointChild; k++) {
+        		sibling.children.add(children.remove(0));
+        	}
+        	
+        	if (branchingFactor % 2 == 0) {
         		sibling.children.add(children.remove(0));
         	}
         	
@@ -957,7 +964,7 @@ public class BPTree<K extends Comparable<K>, V> implements BPTreeADT<K, V> {
         System.out.println(filteredValues.size());
         
         
-        BPTree<Integer, Integer> tree = new BPTree<Integer,Integer>(5);
+        BPTree<Integer, Integer> tree = new BPTree<Integer,Integer>(3);
         tree.insert(5, 5);
         tree.insert(5, 5);
         System.out.println(tree.toString());
@@ -980,9 +987,35 @@ public class BPTree<K extends Comparable<K>, V> implements BPTreeADT<K, V> {
         tree.insert(35, 37);
         tree.insert(35, 65);
         tree.insert(35, 12);
+        tree.insert(25, 25);
+        tree.insert(100, 100);
+        System.out.println(tree.toString());
         
         tree.printValueList();
         System.out.println(tree.rangeSearch(4, ">=").toString());
+        
+        BPTree<Integer, Integer> tree2 = new BPTree<Integer,Integer>(4);
+        tree2.insert(2, 2);
+        tree2.insert(33, 33);
+        System.out.println(tree2.toString());
+        tree2.insert(16, 16);
+        System.out.println(tree2.toString());
+        tree2.insert(26, 26);
+        System.out.println(tree2.toString());
+        tree2.insert(33, 33);
+        System.out.println(tree2.toString());
+        tree2.insert(13, 13);
+        System.out.println(tree2.toString());
+        tree2.insert(4, 4);
+        System.out.println(tree2.toString());
+        tree2.insert(5, 5);
+        System.out.println(tree2.toString());
+        tree2.insert(6, 6);
+        System.out.println(tree2.toString());
+        tree2.insert(14, 14);     
+        System.out.println(tree2.toString());
+        tree2.insert(15, 15);
+        System.out.println(tree2.toString());
     }
 
 } // End of class BPTree
