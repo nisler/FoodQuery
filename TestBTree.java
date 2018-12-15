@@ -13,7 +13,6 @@ public class TestBTree {
         catch(Exception e) {
             fail("Caught Unexpected Exception: " + e.getMessage());
         }
-        //TODO: check tree has 20 values?
     }
     @Test    
     public void testInsertBF3() {

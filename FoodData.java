@@ -59,7 +59,6 @@ public class FoodData implements FoodDataADT<FoodItem> {
      */
     @Override
     public void loadFoodItems(String filePath) {
-        // TODO : add more exception handling and input checks
         Stream<String> lines = null;
         try {
             lines = Files.lines(Paths.get(filePath));
@@ -172,8 +171,6 @@ public class FoodData implements FoodDataADT<FoodItem> {
      */
     @Override
     public void saveFoodItems(String filename) {
-        // TODO : add nutrients
-        // TODO : more exception handling and file output checks
         List<FoodItem> sortedFoodItemList = foodItemList.stream()
                 .sorted((item1, item2) -> item1.getName().compareToIgnoreCase(item2.getName()))
                 .collect(Collectors.toList());
@@ -193,7 +190,6 @@ public class FoodData implements FoodDataADT<FoodItem> {
                 printwriter.println(itemString.toString());
             });
         } catch (IOException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         }
     }
