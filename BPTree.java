@@ -4,7 +4,7 @@
  * Course:     CS400
  * Authors:    Benjamin Nisler, Gabriella Cottiero, Olivia Gonzalez, 
  *             Timothy James, Tollan Renner
- * Due Date:   Saturday, December 15, 11:59pm
+ * Due Date:   Saturday, December 16, 11:59pm
  *
  * Additional credits:
  *
@@ -238,6 +238,11 @@ public class BPTree<K extends Comparable<K>, V> implements BPTreeADT<K, V> {
     	System.out.println();
     }
     
+    /**
+     * Going from left -> right in the list of leaf keys,
+     * prints out all values in the BPTree.
+     * For use in debugging.
+     */
     private void printValueList() {
     	Node current = root;
     	//keep going down the left side of the tree until we hit a leaf
@@ -297,16 +302,34 @@ public class BPTree<K extends Comparable<K>, V> implements BPTreeADT<K, V> {
          */
         abstract Node split();
         
-        /*
-         * (non-Javadoc)
-         * @see BPTree#rangeSearch(java.lang.Object, java.lang.String)
-         */
+        /**
+	     * Gets the values that satisfy the given range 
+	     * search arguments.
+	     * 
+	     * Value of comparator can be one of these: 
+	     * "<=", "==", ">="
+	     * 
+	     * Example:
+	     *     If given key = 2.5 and comparator = ">=":
+	     *         return all the values with the corresponding 
+	     *      keys >= 2.5
+	     *      
+	     * If key is null or not found, return empty list.
+	     * If comparator is null, empty, or not according
+	     * to required form, return empty list.
+	     * 
+	     * @param key to be searched
+	     * @param comparator is a string
+	     * @param list - list of values we have found so far.
+	     * Will be modified during rangeSearch as new matches are found
+	     * @param valueMap - map of key-value lists in the tree
+         **/
         abstract void rangeSearch(K key, String comparator, List<V> list, HashMap<K,ArrayList<V>> valueMap);
 
         /**
          * Returns true if node is overfull
          * If internal - true if # children > branching factor
-         * if leaf - true if # children >= branching factor
+         * if leaf - true if # keys >= branching factor
          * @return boolean
          */
         abstract boolean isOverflow();
@@ -346,7 +369,7 @@ public class BPTree<K extends Comparable<K>, V> implements BPTreeADT<K, V> {
         /**
          * Returns true if node is overfull
          * If internal - true if # children > branching factor
-         * if leaf - true if # children >= branching factor
+         * if leaf - true if # keys >= branching factor
          * @return boolean
          */
         boolean isOverflow() {
@@ -364,6 +387,9 @@ public class BPTree<K extends Comparable<K>, V> implements BPTreeADT<K, V> {
          * @param current - the root of the current subtree
          * @param key - the key being inserted
          * @param value - the value associated with the key
+         * @param valueMap - map of key-value lists in the tree
+         * @return Node - the current node after insertion (either what current was to start with,
+         * or a new parent created after splitting current)
          */
         Node recursiveInsert(InternalNode prev, Node current, K key, V value, HashMap<K,ArrayList<V>> valueMap) {
         	//if the current node is null, don't do anything
@@ -455,6 +481,37 @@ public class BPTree<K extends Comparable<K>, V> implements BPTreeADT<K, V> {
         }
         
         /**
+         * Creates a new sibling node holding the smaller half of the keys
+         * from the current node
+         * The current node retains all keys from the middle onward
+         * @return new sibling node
+         */
+        Node split() {
+        	
+        	InternalNode sibling = new InternalNode();
+        	int halfPointKey = (keys.size())/2;
+        	int halfPointChild = (children.size())/2;
+        	
+        	//give everything to left of middle key to sibling
+        	for (int i = 0; i < halfPointKey; i++) {
+        		sibling.keys.add(keys.remove(0));
+        	}
+        	
+        	//now distribute children
+        	//sibling gets everything up to middle
+        	for (int k = 0; k < halfPointChild; k++) {
+        		sibling.children.add(children.remove(0));
+        	}
+        	
+        	if (branchingFactor % 2 == 0) {
+        		sibling.children.add(children.remove(0));
+        	}
+        	
+        	return sibling;
+        	
+        }
+        
+        /**
          * Promotes the given key and children nodes
          * into the node that we're currently looking at
          * @param child1 - smaller (based on sizes of keys) child to add pointers to
@@ -465,6 +522,8 @@ public class BPTree<K extends Comparable<K>, V> implements BPTreeADT<K, V> {
         	//case 1: key is less than everything in current key list
         	if (key.compareTo(keys.get(0)) < 0) {
         		keys.add(0,key);
+        		//append children at beginning
+        		//do child2 first so end result is child1, child2
         		children.add(0,child2);
         		children.add(0,child1);
         		return;
@@ -473,6 +532,7 @@ public class BPTree<K extends Comparable<K>, V> implements BPTreeADT<K, V> {
         	//case 2: key is greater than everything in current key list
         	if (key.compareTo(keys.get(keys.size() - 1)) > 0) {
         		keys.add(key);
+        		//add children onto end
         		children.add(child1);
         		children.add(child2);
         		return;
@@ -484,6 +544,8 @@ public class BPTree<K extends Comparable<K>, V> implements BPTreeADT<K, V> {
         		//and add its associated node children in between as well
         		if ((key.compareTo(keys.get(i)) > 0) && (key.compareTo(keys.get(i+1)) <= 0)) {
         			keys.add(i+1,key);
+        			//add child2 first
+        			//so end result is child1, child2
         			children.add(i+1,child2);
         			children.add(i+1,child1);
         		}
@@ -491,38 +553,42 @@ public class BPTree<K extends Comparable<K>, V> implements BPTreeADT<K, V> {
         }
         
         /**
-         * Creates a new sibling node holding the smaller half of the keys
-         * from the current node
-         * The current node retains all keys from the middle onward
-         * @return new sibling node
-         */
-        Node split() {
-        	
-        	InternalNode sibling = new InternalNode();
-        	
-        	//give everything to left of middle key to sibling
-        	for (int i = 0; i < (keys.size()/2); i++) {
-        		sibling.keys.add(keys.remove(0));
-        	}
-        	
-        	//now distribute children
-        	//sibling gets everything up to middle
-        	for (int k = 0; k <= children.size()/2; k++) {
-        		sibling.children.add(children.remove(0));
-        	}
-        	
-        	return sibling;
-        	
-        }
-        
-        /**
-         * (non-Javadoc)
-         * @see BPTree.Node#rangeSearch(java.lang.Comparable, java.lang.String)
-         */
+	     * Gets the values that satisfy the given range 
+	     * search arguments.
+	     * 
+	     * Uses a recursive helper.
+	     * 
+	     * Value of comparator can be one of these: 
+	     * "<=", "==", ">="
+	     * 
+	     * Example:
+	     *     If given key = 2.5 and comparator = ">=":
+	     *         return all the values with the corresponding 
+	     *      keys >= 2.5
+	     *      
+	     * If key is null or not found, return empty list.
+	     * If comparator is null, empty, or not according
+	     * to required form, return empty list.
+	     * 
+	     * @param key to be searched
+	     * @param comparator is a string
+	     * @param list - list of values we have found so far
+	     * Will be modified as new matches are found
+	     * @param valueMap - map of key-value lists in the tree
+         **/
         void rangeSearch(K key, String comparator, List<V> list, HashMap<K,ArrayList<V>> valueMap) {
             recursiveSearch(this, key, comparator, list, valueMap);
         }
         
+        /**
+         * Recursive helper for rangeSearch.
+         * @param current - the current node being examined
+	     * @param key to be searched
+	     * @param comparator is a string
+	     * @param list - list of values we have found so far
+	     * Will be modified as new matches are found
+	     * @param valueMap - map of key-value lists in the tree
+         */
         void recursiveSearch(Node current, K key, String comparator, List<V> list, HashMap<K,ArrayList<V>> valueMap) {
             //if the current node is null, don't do anything
             if (current == null) return;
@@ -531,61 +597,65 @@ public class BPTree<K extends Comparable<K>, V> implements BPTreeADT<K, V> {
             if (current instanceof BPTree.LeafNode) {
                 current.rangeSearch(key, comparator, list, valueMap);
             }
+            
+            //otherwise node is internal
+            //use same logic as insert to find the proper leaf to start the search
             else {
-                    if(comparator.equals("<=")){
-                        for (int i = current.keys.size()-1; i >= 0; i++) {
-                            //check if this key is greater than or equal to current key
-                            if ((key.compareTo(current.keys.get(i)) >= 0)) {
-                                //if yes, search in child to right of current key
-                                recursiveSearch(((InternalNode) current).children.get(i+1), key, comparator, list, valueMap);
-                                break;
-                            }
-                            else {
-                                //else search in child to left of current key
-                                recursiveSearch(((InternalNode) current).children.get(i), key, comparator, list, valueMap);
-                                break;
-                            }
-                        }
-                    }
-                    else if(comparator.equals(">=")){
-                        for (int i = 0; i < current.keys.size(); i++) {
-                            //check if this key is less than or equal to current key
-                            if ((key.compareTo(current.keys.get(i)) < 0)) {
-                                //search in child to left of current key if i is not 0
-                                recursiveSearch(((InternalNode) current).children.get(i), key, comparator, list, valueMap);
-                                break;
-                            }
-                            else {
-                                //i is 0, search in leftmost child
-                                recursiveSearch(((InternalNode) current).children.get(i + 1), key, comparator, list, valueMap);
-                                break;
-                            }
-                        }
-                    }
-                    else if(comparator.equals("==")){
-                        for (int i = 0; i < current.keys.size(); i++) {
-                            //check if this key is equal to current key
-                            if ((key.compareTo(current.keys.get(i)) < 0)){
-                                //if yes, search in left child
-                                recursiveSearch(((InternalNode) current).children.get(i),key,comparator, list, valueMap);
-                                break;
-                            }
-                            else if (i == current.keys.size()){
-                                recursiveSearch(((InternalNode) current).children.get(i),key,comparator, list, valueMap);
-                                break;
-                            }
-                            else {
-                                //if no, search in right child
-                                recursiveSearch(((InternalNode) current).children.get(i+1),key,comparator, list, valueMap);
-                                break;
-                            }
-                        }
-                    }
-                    else{
-                        return;
-                    }
-                //}
-                
+            	//edge case 1: key < everything in current node
+            	//so search in left child
+        		if (key.compareTo(current.keys.get(0)) < 0) {
+            		Node firstChild = ((InternalNode) current).children.get(0);
+        			recursiveSearch(firstChild,key,comparator,list,valueMap);
+        		}
+        		
+        		//edge case 2: key = first element of current node
+        		//and comparator is >= or ==
+        		else if ((key.compareTo(current.keys.get(0)) == 0) && (
+        				comparator.contentEquals(">=") || comparator.contentEquals("=="))) {
+            		Node firstChild = ((InternalNode) current).children.get(0);
+        			recursiveSearch(firstChild,key,comparator,list,valueMap);
+        		}
+        		
+        		//edge case 3: key is > everything in this node
+        		//so search in the subtree with this node's last child as root
+        		else if (key.compareTo(current.keys.get(current.keys.size() - 1)) > 0) {
+        			Node lastChild = ((InternalNode) current).children.get(((InternalNode) current).children.size() - 1);
+        			
+        			recursiveSearch(lastChild,key,comparator,list,valueMap);
+        		}
+        		
+        		//edge case 4: key = last key in this node and comparator is <= 
+        		//so search in the subtree with this node's last child as root
+        		else if ((key.compareTo(current.keys.get(current.keys.size() - 1)) == 0)
+        				&& comparator.contentEquals("<=")) {
+        			Node lastChild = ((InternalNode) current).children.get(((InternalNode) current).children.size() - 1);
+        			
+        			recursiveSearch(lastChild,key,comparator,list,valueMap);
+        		}
+        		
+            	for (int i = 0; i < current.keys.size()-1; i++) {
+    				//check if this key is between the current key and its neighbor
+            		
+            		//if comparator is == or >= always want to prioritize going "left"
+            		//so make sure we are fully greater than keys.get(i) before choosing to go "right" of it
+            		if (comparator.contentEquals("==") || comparator.contentEquals(">=")){
+        				if ((key.compareTo(current.keys.get(i)) > 0) && (key.compareTo(current.keys.get(i+1)) <= 0)) {
+        					//if yes, search in the child between these two keys
+        					recursiveSearch(((InternalNode) current).children.get(i+1),key,comparator,list,valueMap);
+        					break;
+        				}
+            		}
+            		
+            		//if comparator is <= always want to prioritize going "right"
+            		//so make sure we are fully less than keys.get(i+1) before choosing to go "left" of it
+            		else if (comparator.contentEquals("<=")) {
+        				if ((key.compareTo(current.keys.get(i)) >= 0) && (key.compareTo(current.keys.get(i+1)) < 0)) {
+        					//if yes, search in the child between these two keys
+        					recursiveSearch(((InternalNode) current).children.get(i+1),key,comparator,list,valueMap);
+        					break;
+        				}
+            		}
+    			}
             }
         }
     } // End of class InternalNode
@@ -627,17 +697,19 @@ public class BPTree<K extends Comparable<K>, V> implements BPTreeADT<K, V> {
         }
         
         /**
-         * Inserts the key and value into this leaf's key and value lists
+         * Inserts the key and value into this leaf's key list
+         * And inserts value into key's associated list in valueMap
          * While maintaining sorted order
-         * keeps hte key and its associated value at the same index in the list
          * @param key - key to be inserted
          * @param value - value associated with the key
+         * @param valueMap - key-list of value map for all keys in the tree
+         * will insert key and value into as well as the tree structure
          */
         protected void insert(K key, V value, HashMap<K,ArrayList<V>> valueMap) {
         	
-        	ArrayList<V> valuesList;
+        	ArrayList<V> valuesList; //list of values to associate with the key we're inserting
         	
-        	//edge case #0 - nothing in list
+        	//edge case #0 - nothing in list of keys, so just insert at the beginning
         	if (keys.size() == 0) {
         		if (!valueMap.containsKey(key)) {
         			keys.add(0,key);
@@ -651,7 +723,8 @@ public class BPTree<K extends Comparable<K>, V> implements BPTreeADT<K, V> {
         		return;
         	}
         	
-        	//edge case #1 - key smaller than everything in list
+        	//edge case #1 - key smaller than everything in list of keys
+        	//so insert at front of list
         	if (key.compareTo(keys.get(0)) < 0) {
         		if (!valueMap.containsKey(key)) {
         			keys.add(0,key);
@@ -665,7 +738,8 @@ public class BPTree<K extends Comparable<K>, V> implements BPTreeADT<K, V> {
         		return;
         	}
         	
-        	//edge case #2 - key larger than everything in list
+        	//edge case #2 - key larger than everything in list of keys
+        	//so insert at end of list
         	if (key.compareTo(keys.get(keys.size() - 1)) > 0) {
         		if (!valueMap.containsKey(key)) {
         			keys.add(key);
@@ -680,6 +754,7 @@ public class BPTree<K extends Comparable<K>, V> implements BPTreeADT<K, V> {
         	}
         	
         	//edge case #3 - key equal to last element in list
+        	//so don't insert a new key into the tree but do insert a new value into valueMap.get(key)
         	if (key.compareTo(keys.get(keys.size() - 1)) == 0) {
         		valuesList = valueMap.get(key);
         		valuesList.add(value);
@@ -687,12 +762,14 @@ public class BPTree<K extends Comparable<K>, V> implements BPTreeADT<K, V> {
         	
         	//otherwise, need to insert somewhere in the middle
             for (int i = 0; i < keys.size() - 1; i++) {
-            	//if key is duplicate, 
+            	//if key is duplicate, don't insert again into tree
+            	//but do insert into valuesList (from valueMap)
             	if (key.compareTo(keys.get(i)) == 0) {
             		valuesList = valueMap.get(key);
             		valuesList.add(value);
             		return;
             	}
+            	//otherwise add key to keys and add entry to valueMap
             	if ((key.compareTo(keys.get(i)) > 0) && (key.compareTo(keys.get(i+1)) < 0)) {
             		if (!valueMap.containsKey(key)) {
             			keys.add(i+1,key);
@@ -737,6 +814,7 @@ public class BPTree<K extends Comparable<K>, V> implements BPTreeADT<K, V> {
         	
             // split leaf down the middle into two new leaves
         	LeafNode sibling = new LeafNode();
+        	int halfPoint = (keys.size()/2);
         	
         	//maintain linked list pointers
         	sibling.previous = this.previous;
@@ -745,7 +823,7 @@ public class BPTree<K extends Comparable<K>, V> implements BPTreeADT<K, V> {
         	this.previous = sibling;
         	
         	//give first half of values to sibling
-        	for (int i = 0; i < (keys.size()/2); i++){
+        	for (int i = 0; i < halfPoint; i++){
         		sibling.keys.add(keys.remove(0));
         	}
         	
@@ -753,12 +831,35 @@ public class BPTree<K extends Comparable<K>, V> implements BPTreeADT<K, V> {
         }
         
         /**
-         * (non-Javadoc)
-         * @see BPTree.Node#rangeSearch(Comparable, String)
-         */
+	     * Gets the values that satisfy the given range 
+	     * search arguments.
+	     * 
+	     * Searches the current key and then looks right or left
+	     * in the linked list if necessary
+	     * 
+	     * Value of comparator can be one of these: 
+	     * "<=", "==", ">="
+	     * 
+	     * Example:
+	     *     If given key = 2.5 and comparator = ">=":
+	     *         return all the values with the corresponding 
+	     *      keys >= 2.5
+	     *      
+	     * If key is null or not found, return empty list.
+	     * If comparator is null, empty, or not according
+	     * to required form, return empty list.
+	     * 
+	     * @param key to be searched
+	     * @param comparator is a string
+	     * @param list - list of values we have found so far
+	     * Will be modified as new matches are found
+	     * @param valueMap - map of key-value lists in the tree
+         **/
        void rangeSearch(K key, String comparator, List<V> list, HashMap<K,ArrayList<V>> valueMap){
     	   ArrayList<V> valuesArr;
             // Case 1:  ">=
+    	   	//pull all values associated with keys in this node that are >= key
+    	    //and then search all nodes to the right of this one in the linked list
             if(comparator.equals(">=")){
                 for(int i=0; i < keys.size(); i++){
                     if(key.compareTo(keys.get(i)) <= 0){
@@ -775,12 +876,14 @@ public class BPTree<K extends Comparable<K>, V> implements BPTreeADT<K, V> {
                 
             }
             //Case 2: "<="
+            //pull all values associated with keys in this node that are <= key
+            //and then search all nodes to the left of this one in the linked list
             else if(comparator.equals("<=")){
                 for(int i = keys.size()-1; i >= 0; i--){
                     if(key.compareTo(keys.get(i)) >= 0){
                         valuesArr = valueMap.get(keys.get(i));
                         for (int j = 0; j < valuesArr.size(); j++) {
-                        	list.add(valuesArr.get(j));
+                        	list.add(0,valuesArr.get(j));
                         }
                     }
                 }  
@@ -790,16 +893,23 @@ public class BPTree<K extends Comparable<K>, V> implements BPTreeADT<K, V> {
                 
             }
             //Case 3: "=="
+            //search for a key in this node that is equal to key
+            //once found, break out of the loop
+            //because of the way insert is written we can assume that each key
+            //is only present once
             else if(comparator.equals("==")){
+              boolean found = false;
               for(int i = 0; i < keys.size(); i++){
                 if((key.compareTo(keys.get(i)) == 0)){
                     valuesArr = valueMap.get(keys.get(i));
                     for (int j = 0; j < valuesArr.size(); j++) {
                         list.add(valuesArr.get(j));
                     }
+                    found = true;
+                    break;
                 }
-              }                
-              if(this.next != null) {
+              }  
+              if(this.next !=null && !found) {
                   next.rangeSearch(key, comparator, list, valueMap);
               }
             }
@@ -873,9 +983,37 @@ public class BPTree<K extends Comparable<K>, V> implements BPTreeADT<K, V> {
         tree.insert(35, 37);
         tree.insert(35, 65);
         tree.insert(35, 12);
+        tree.insert(25, 25);
+        tree.insert(100, 100);
+        System.out.println(tree.toString());
         
         tree.printValueList();
-        System.out.println(tree.rangeSearch(12, "==").toString());
+        System.out.println(tree.rangeSearch(4, ">=").toString());
+        
+        BPTree<Integer, Integer> tree2 = new BPTree<Integer,Integer>(4);
+        tree2.insert(2, 2);
+        tree2.insert(33, 33);
+        System.out.println(tree2.toString());
+        tree2.insert(16, 16);
+        System.out.println(tree2.toString());
+        tree2.insert(26, 26);
+        System.out.println(tree2.toString());
+        tree2.insert(33, 33);
+        System.out.println(tree2.toString());
+        tree2.insert(13, 13);
+        System.out.println(tree2.toString());
+        tree2.insert(4, 4);
+        System.out.println(tree2.toString());
+        tree2.insert(5, 5);
+        System.out.println(tree2.toString());
+        tree2.insert(6, 6);
+        System.out.println(tree2.toString());
+        tree2.insert(14, 14);     
+        System.out.println(tree2.toString());
+        tree2.insert(15, 15);
+        System.out.println(tree2.toString());
+        
+        System.out.println(tree2.rangeSearch(26, "<="));
     }
 
 } // End of class BPTree
